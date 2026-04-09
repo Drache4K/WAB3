@@ -305,9 +305,6 @@ def get_Sendung_Verteilungszenter(id):
         """, str(id)
     )
     return to_json_liste(cur.fetchall(), cur.description)
-        
-    )
-    return to_json_liste(cur.fetchall(), cur.description)
 
 # Fahrer ------------------------------------------
 @app.get("/fahrer/")
