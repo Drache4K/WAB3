@@ -20,6 +20,54 @@ conn = psycopg2.connect(
 
 app = FastAPI()
 
+## Models
+
+class Kunde(BaseModel):
+    kunde_id: int
+    name: str
+    telefonnummer: str
+    mailadresse: str
+    adresse_rechung: str
+    adresse_liefer: str
+
+class Sendung(BaseModel):
+    sendung_id: int
+    groesse: float
+    gewicht: float
+    anmerkung: str
+    adresse_liefer: str
+    tour_id: int
+    kunde_id: int
+
+class Fahrer(BaseModel):
+    fahrer_id: int
+    fuehrerschein: str
+    name: str
+
+class Fahrzeug(BaseModel):
+    fahrzeug_id: int
+    defekt: bool
+    kennzeichen: str
+    verteilungszentrum_id: int
+
+class Verteilungszentrum(BaseModel):
+    verteilungszentrum_id: int
+    adresse: str
+    telefonnummer: str
+
+class Tour(BaseModel):
+    tour_id: int
+    tour_stopps: int
+    tour_zeit: str
+
+class Sendungsverfolgung(BaseModel):
+    versendet: bool
+    datum: datetime.date
+    sendung_id: int
+    verteilungszentrum_id: int
+
+## -------------------------------------
+
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
@@ -268,6 +316,36 @@ def get_Kunde_id(id: int):
     )
     return to_json_liste(cur.fetchall(), cur.description)
 
+@app.post("/kunde/")
+def create_kunde(kunde: Kunde):
+    cur.execute(
+        """--sql
+        INSERT INTO versand_dienstleister.kunde 
+            (kunde_id, name, telefonnummer, mailadresse, adresse_rechung, adresse_liefer) 
+        VALUES (%s,%s,%s,%s,%s,%s);
+        """, (kunde.kunde_id, kunde.name, kunde.telefonnummer, kunde.mailadresse, kunde.adresse_rechung, kunde.adresse_liefer)
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.put("/kunde/{id}")
+def update_kunde(id: int, kunde: Kunde):
+    cur.execute(
+        """--sql
+        UPDATE versand_dienstleister.kunde 
+            SET name = %s, telefonnummer = %s, mailadresse = %s, adresse_rechung = %s, adresse_liefer = %s 
+        WHERE kunde_id = %s;
+        """, (kunde.name, kunde.telefonnummer, kunde.mailadresse, kunde.adresse_rechung, kunde.adresse_liefer, id)
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.delete("/kunde/{id}")
+def delete_kunde(id: int):
+    cur.execute(
+        """--sql
+        DELETE FROM versand_dienstleister.kunde WHERE kunde_id = %s;
+        """, (id)
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
 
 # Sendung ------------------------------------------
 @app.get("/sendung/")
@@ -306,6 +384,37 @@ def get_Sendung_Verteilungszenter(id):
     )
     return to_json_liste(cur.fetchall(), cur.description)
 
+@app.post("/sendung/")
+def create_sendung(sendung: Sendung):
+    cur.execute(
+        """--sql
+        INSERT INTO versand_dienstleister.sendung 
+            (sendung_id, groesse, gewicht, anmerkung, adresse_liefer, tour_id, kunde_id) 
+        VALUES (%s,%s,%s,%s,%s,%s,%s);
+        """, (sendung.sendung_id, sendung.groesse, sendung.gewicht, sendung.anmerkung, sendung.adresse_liefer, sendung.tour_id, sendung.kunde_id)
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.put("/sendung/{id}")
+def update_sendung(id: int, sendung: Sendung):
+    cur.execute(
+        """--sql
+        UPDATE versand_dienstleister.sendung 
+            SET groesse = %s, gewicht = %s, anmerkung = %s, adresse_liefer = %s, tour_id = %s, kunde_id = %s 
+        WHERE sendung_id = %s;
+        """, (sendung.groesse, sendung.gewicht, sendung.anmerkung, sendung.adresse_liefer, sendung.tour_id, sendung.kunde_id, id)
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.delete("/sendung/{id}")
+def delete_sendung(id: int):
+    cur.execute(
+        """--sql
+        DELETE FROM versand_dienstleister.sendung WHERE sendung_id = %s;
+        """, (id)
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
+
 # Fahrer ------------------------------------------
 @app.get("/fahrer/")
 def get_alle_Fahrer():
@@ -317,7 +426,7 @@ def get_Fahrer_id(id):
     cur.execute("SELECT * FROM versand_dienstleister.fahrer WHERE fahrer_id = %s;", str(id))
     return to_json_liste(cur.fetchall(), cur.description)
 
-@app.get("/fahrer/{id}/tour/")
+@app.get("/fahrer/{id}/tour/") # TODO: hier noch die Fahrzeug Kenzeichen
 def get_Fahrer_Tour(id: int):
     cur.execute(
         """SELECT f.*, t.*
@@ -327,6 +436,35 @@ def get_Fahrer_Tour(id: int):
             INNER JOIN versand_dienstleister.tour t
             ON t.tour_id = ft.tour_id
             WHERE ft.fahrer_id = %s;""", str(id))
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.post("/fahrer/")
+def create_fahrer(fahrer: Fahrer):
+    cur.execute(
+        """INSERT INTO versand_dienstleister.fahrer
+        (fahrer_id, fuehrerschein, name)
+        VALUES (%s,%s,%s);
+        """, (fahrer.fahrer_id, fahrer.fuehrerschein, fahrer.name)
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.put("/fahrer/{id}")
+def update_fahrer(id: int, fahrer: Fahrer):
+    cur.execute(
+        """UPDATE versand_dienstleister.fahrer
+        SET fuehrerschein = %s, name = %s
+        WHERE fahrer_id = %s;
+        """, (fahrer.fuehrerschein, fahrer.name, id)
+        )
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.delete("/fahrer/{id}")
+def delete_fahrer(id: int):
+    cur.execute(
+        """--sql
+        DELETE FROM versand_dienstleister.fahrer WHERE fahrer_id = %s;
+        """, (id)
+    )
     return to_json_liste(cur.fetchall(), cur.description)
 
 
@@ -348,6 +486,37 @@ def get_Fahrzeug_id(id):
     cur.execute("SELECT * FROM versand_dienstleister.fahrzeug WHERE fahrzeug_id = %s;", str(id))
     return to_json_liste(cur.fetchall(), cur.description)
 
+@app.post("/fahrzeug/")
+def create_fahrzeug(fahrzeug: Fahrzeug):
+    cur.execute(
+        """--sql
+        INSERT INTO versand_dienstleister.fahrzeug 
+            (fahrzeug_id, defekt, kennzeichen, verteilungszentrum_id) 
+        VALUES (%s,%s,%s,%s);
+        """, (fahrzeug.fahrzeug_id, fahrzeug.defekt, fahrzeug.kennzeichen, fahrzeug.verteilungszentrum_id)
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.put("/fahrzeug/{id}")
+def update_fahrzeug(id: int, fahrzeug: Fahrzeug):
+    cur.execute(
+        """--sql
+        UPDATE versand_dienstleister.fahrzeug 
+            SET defekt = %s, kennzeichen = %s, verteilungszentrum_id = %s 
+        WHERE fahrzeug_id = %s;
+        """, (fahrzeug.defekt, fahrzeug.kennzeichen, fahrzeug.verteilungszentrum_id, id)
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.delete("/fahrzeug/{id}")
+def delete_fahrzeug(id: int):
+    cur.execute(
+        """--sql
+        DELETE FROM versand_dienstleister.fahrzeug WHERE fahrzeug_id = %s;
+        """, (id)
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
+
 # Touren ------------------------------------------
 @app.get("/tour/")
 def get_alle_Touren():
@@ -363,7 +532,7 @@ def get_Tour_id(id):
     cur.execute("SELECT * FROM versand_dienstleister.tour WHERE tour_id = %s;", str(id))
     return to_json_liste(cur.fetchall(), cur.description)
 
-@app.get("/tour/{id}/fahrer")
+@app.get("/tour/{id}/fahrer") # TODO: Fahrzeug Kenzeichen
 def get_Tour_Fahrer(id: int):
     cur.execute(
         """SELECT t.*, f.*
@@ -373,6 +542,35 @@ def get_Tour_Fahrer(id: int):
             INNER JOIN versand_dienstleister.fahrer f
             ON f.fahrer_id = ft.fahrer_id
             WHERE ft.tour_id = %s;""", str(id))
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.post("/tour/")
+def create_tour(tour: Tour):
+    cur.execute(
+        """INSERT INTO versand_dienstleister.tour 
+            (tour_id, tour_stopps, tour_zeit) 
+        VALUES (%s,%s,%s);
+        """, (tour.tour_id, tour.tour_stopps, tour.tour_zeit)
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.put("/tour/{id}")
+def update_tour(id: int, tour: Tour):
+    cur.execute(
+        """UPDATE versand_dienstleister.tour 
+            SET tour_stopps = %s, tour_zeit = %s 
+        WHERE tour_id = %s;
+        """, (tour.tour_stopps, tour.tour_zeit, id)
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.delete("/tour/{id}")
+def delete_tour(id: int):
+    cur.execute(
+        """--sql
+        DELETE FROM versand_dienstleister.tour WHERE tour_id = %s;
+        """, (id)
+    )
     return to_json_liste(cur.fetchall(), cur.description)
 
 # Verteilungszentrum ---------------------
@@ -387,7 +585,25 @@ def get_alle_Verteilungszetrum(id: int):
         """SELECT * 
         FROM versand_dienstleister.verteilungszentrum 
         WHERE verteilungszentrum_id = %s;""", str(id))
-        return to_json_liste(cur.fetchall(), cur.description)
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.put("/verteilungszentrum/{id}")
+def update_verteilungszentrum(id: int, vzeitelungszentrum: Verteilungszentrum):
+    cur.execute(
+        """UPDATE versand_dienstleister.verteilungszentrum 
+        SET adresse = %s, telefonnummer = %s 
+        WHERE verteilungszentrum_id = %s;
+        """, (vzeitelungszentrum.adresse, vzeitelungszentrum.telefonnummer, id)
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.delete("/verteilungszentrum/{id}")
+def delete_verteilungszentrum(id: int):
+    cur.execute(
+        """DELETE FROM versand_dienstleister.verteilungszentrum WHERE verteilungszentrum_id = %s;
+        """, (id)
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
 
 # API Ende ++++++++++++++++++++++++++++
 
@@ -442,5 +658,4 @@ def tests():
 #    tests()
 
 if __name__ == "__main__":
-    uvicorn.run("app:app", port=7000, reload=True) 
-    
+    uvicorn.run("app:app", port=7000, reload=True)
