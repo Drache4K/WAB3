@@ -6,6 +6,7 @@ import dotenv
 import os
 from fastapi import FastAPI
 import uvicorn
+from pydantic import BaseModel
 
 dotenv.load_dotenv(dotenv.find_dotenv())
 
@@ -326,6 +327,15 @@ def create_kunde(kunde: Kunde):
     )
     return to_json_liste(cur.fetchall(), cur.description)
 
+@app.get("/kunde/{id}/sendungen/")
+def get_Sendungen_von_Kunde(id: int):
+    cur.execute(
+        """SELECT s.sendung_id, s.groesse, s.gewicht, s.anmerkung
+        FROM versand_dienstleister.sendung s
+        WHERE s.kunde_id = %s;
+    """, str(id))
+    return to_json_liste(cur.fetchall(), cur.description)
+
 @app.put("/kunde/{id}")
 def update_kunde(id: int, kunde: Kunde):
     cur.execute(
@@ -383,10 +393,16 @@ def get_Sendung_Verteilungszenter(id):
 @app.post("/sendung/")
 def create_sendung(sendung: Sendung):
     cur.execute(
-        """INSERT INTO versand_dienstleister.sendung 
-            (sendung_id, groesse, gewicht, anmerkung, adresse_liefer, tour_id, kunde_id) 
+        """--sql
+        START TRANSACTION;
+        INSERT INTO versand_dienstleister.sendung
+        (sendung_id, groesse, gewicht, anmerkung, adresse_liefer, tour_id, kunde_id)
         VALUES (%s,%s,%s,%s,%s,%s,%s);
-        """, (sendung.sendung_id, sendung.groesse, sendung.gewicht, sendung.anmerkung, sendung.adresse_liefer, sendung.tour_id, sendung.kunde_id)
+        
+        INSERT INTO versand_dienstleister.sendungsverfolgung
+        (sendung_id, datum, versendet)
+        VALUES (%s, CURRENT_DATE, False);
+        COMMIT;""", (sendung.sendung_id, sendung.groesse, sendung.gewicht, sendung.anmerkung, sendung.adresse_liefer, sendung.tour_id, sendung.kunde_id, sendung.sendung_id)
     )
     return to_json_liste(cur.fetchall(), cur.description)
 
@@ -475,6 +491,18 @@ def get_alle_Fahrzeuge():
 @app.get("/fahrzeug/{id}")
 def get_Fahrzeug_id(id):
     cur.execute("SELECT * FROM versand_dienstleister.fahrzeug WHERE fahrzeug_id = %s;", str(id))
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.get("/fahrzeug/defekt/")
+def get_defekte_Fahrzeuge():
+    cur.execute(
+        """SELECT f.fahrzeug_id, f.kennzeichen, v.adresse
+        FROM versand_dienstleister.fahrzeug f
+        INNER JOIN versand_dienstleister.verteilungszentrum v
+        ON f.verteilungszentrum_id = v.verteilungszentrum_id
+        WHERE f.defekt = TRUE;
+    """
+    )
     return to_json_liste(cur.fetchall(), cur.description)
 
 @app.post("/fahrzeug/")
@@ -590,6 +618,100 @@ def delete_verteilungszentrum(id: int):
         """, (id)
     )
     return to_json_liste(cur.fetchall(), cur.description)
+# Addons -------
+
+# Aggregation Queries
+@app.get("/sendung/count/")
+def get_sendung_count():
+    cur.execute("SELECT COUNT(*) AS anzahl_sendungen FROM versand_dienstleister.sendung;")
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.get("/sendung/average-weight/")
+def get_average_weight():
+    cur.execute("SELECT AVG(gewicht) AS durchschnittsgewicht FROM versand_dienstleister.sendung;")
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.get("/sendung/total-weight/")
+def get_total_weight():
+    cur.execute("SELECT SUM(gewicht) AS gesamtgewicht FROM versand_dienstleister.sendung;")
+    return to_json_liste(cur.fetchall(), cur.description)
+
+# GROUP BY Queries
+@app.get("/sendung/group-by-kunde/")
+def get_sendungen_per_kunde():
+    cur.execute("""
+        SELECT kunde_id, COUNT(*) AS anzahl_sendungen
+        FROM versand_dienstleister.sendung
+        GROUP BY kunde_id;
+    """)
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.get("/fahrzeug/group-by-verteilungszentrum/")
+def get_fahrzeuge_per_verteilungszentrum():
+    cur.execute("""
+        SELECT verteilungszentrum_id, COUNT(*) AS anzahl_fahrzeuge
+        FROM versand_dienstleister.fahrzeug
+        GROUP BY verteilungszentrum_id;
+    """)
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.get("/fahrer/group-by-tour/")
+def get_touren_per_fahrer():
+    cur.execute("""
+        SELECT fahrer_id, COUNT(tour_id) AS anzahl_touren
+        FROM versand_dienstleister.fahrer_faehrt_tour
+        GROUP BY fahrer_id;
+    """)
+    return to_json_liste(cur.fetchall(), cur.description)
+
+# JOIN + GROUP BY Queries
+@app.get("/kunde/group-by-sendung/")
+def get_sendungen_per_kunde_joined():
+    cur.execute("""
+        SELECT k.name, COUNT(s.sendung_id) AS anzahl_sendungen
+        FROM versand_dienstleister.kunde k
+        INNER JOIN versand_dienstleister.sendung s
+        ON k.kunde_id = s.kunde_id
+        GROUP BY k.name;
+    """)
+    return to_json_liste(cur.fetchall(), cur.description)
+
+# Additional useful queries
+@app.get("/sendung/with-kunde/")
+def get_sendungen_with_kunde():
+    cur.execute("""
+        SELECT s.sendung_id, s.groesse, s.gewicht, s.anmerkung, k.name as kunde_name
+        FROM versand_dienstleister.sendung s
+        INNER JOIN versand_dienstleister.kunde k
+        ON s.kunde_id = k.kunde_id;
+    """)
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.get("/sendung/with-verteilungszentrum/")
+def get_sendungen_with_verteilungszentrum():
+    cur.execute("""
+        SELECT sv.sendung_id, v.adresse
+        FROM versand_dienstleister.sendungsverfolgung sv
+        INNER JOIN versand_dienstleister.verteilungszentrum v
+        ON sv.verteilungszentrum_id = v.verteilungszentrum_id;
+    """)
+    return to_json_liste(cur.fetchall(), cur.description)
+
+# Extras ------------
+
+# Health check endpoint
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
+
+# Database connection status
+@app.get("/db-status")
+def db_status():
+    try:
+        cur.execute("SELECT 1")
+        return {"database": "connected"}
+    except Exception as e:
+        return {"database": "disconnected", "error": str(e)}
 
 # API Ende ++++++++++++++++++++++++++++
 

@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExpressPack - Versanddienstleister</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --secondary-color: #518ef8;
+            --success-color: #1e8e3e;
+            --warning-color: #f9ab00;
+            --danger-color: #d93025;
+            --background-light: #f8f9fa;
+            --card-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        }
+
+        body {
+            background: var(--background-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            box-shadow: var(--card-shadow);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: white !important;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .card {
+            border: none;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 1rem;
+            border-radius: 12px;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #f5f5f5, #e8e8e8);
+            border-bottom: 1px solid #ddd;
+            font-weight: 600;
+        }
+
+        .stat-card {
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .table-responsive {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .badge-status {
+            padding: 0.4em 0.8em;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .badge-aktiv {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge-inaktiv {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .badge-defekt {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .section-title {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(26, 115, 232, 0.25);
+        }
+
+        .icon-btn {
+            font-size: 1.2rem;
+        }
+
+        .footer {
+            background: #343a40;
+            color: white;
+            padding: 1.5rem 0;
+            margin-top: 3rem;
+        }
+
+        .hero-banner {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .kachel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .kachel {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            border: 1px solid #eee;
+        }
+
+        .kachel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(26, 115, 232, 0.3);
+        }
+
+        .kachel-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .modal-title {
+            font-weight: 600;
+        }
+
+        .alert-custom {
+            border-radius: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .kachel-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-box-seam me-2"></i>ExpressPack
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" onclick="showSection('dashboard')">
+                            <i class="bi bi-speedometer2 me-1"></i>Übersicht
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#kunden" onclick="showSection('kunden')">
+                            <i class="bi bi-people me-1"></i>Kunden
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#sendungen" onclick="showSection('sendungen')">
+                            <i class="bi bi-box me-1"></i>Sendungen
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#fahrer" onclick="showSection('fahrer')">
+                            <i class="bi bi-truck me-1"></i>Fahrer
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#fahrzeuge" onclick="showSection('fahrzeuge')">
+                            <i class="bi bi-truck-front me-1"></i>Fahrzeuge
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#touren" onclick="showSection('touren')">
+                            <i class="bi bi-map me-1"></i>Touren
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#verteilungszentren" onclick="showSection('verteilungszentren')">
+                            <i class="bi bi-buildings me-1"></i>Verteilungszentren
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Banner -->
+    <div class="hero-banner">
+        <div class="container text-center">
+            <h1 class="display-5 mb-3">Willkommen bei ExpressPack</h1>
+            <p class="lead">Ihr zuverlässiger Partner für Logistik und Versand</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Dashboard Section -->
+        <section id="dashboard" class="section">
+            <div class="row">
+                <div class="col-12 text-center mb-4">
+                    <h2 class="section-title">Dashboard</h2>
+                </div>
+
+                <!-- Statistikkarten -->
+                <div class="col-md-3 mb-3">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <i class="bi bi-people fs-3 text-primary mb-2"></i>
+                            <div class="stat-number" id="total-kunden">-</div>
+                            <div class="stat-label">Kunden</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <div class="card stat-card" style="border-left-color: var(--success-color);">
+                        <div class="card-body">
+                            <i class="bi bi-box fs-3 text-success mb-2"></i>
+                            <div class="stat-number" id="total-sendungen">-</div>
+                            <div class="stat-label">Sendungen</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <div class="card stat-card" style="border-left-color: var(--warning-color);">
+                        <div class="card-body">
+                            <i class="bi bi-truck fs-3 text-warning mb-2"></i>
+                            <div class="stat-number" id="active-fahrer">-</div>
+                            <div class="stat-label">Aktive Fahrer</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <div class="card stat-card" style="border-left-color: var(--danger-color);">
+                        <div class="card-body">
+                            <i class="bi bi-truck fs-3 text-danger mb-2"></i>
+                            <div class="stat-number" id="defekt-fahrzeuge">-</div>
+                            <div class="stat-label">Defekte Fahrzeuge</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kacheln für schnelle Aktionen -->
+                <div class="col-12 mt-4">
+                    <h5 class="mb-3">Schnellzugriff</h5>
+                    <div class="kachel-grid">
+                        <div class="kachel" onclick="showSection('sendungen')">
+                            <i class="bi bi-box-arrow-in-down kachel-icon"></i>
+                            <h6>Sendung erstellen</h6>
+                        </div>
+                        <div class="kachel" onclick="showSection('fahrer')">
+                            <i class="bi bi-person-check kachel-icon"></i>
+                            <h6>Fahrer verwalten</h6>
+                        </div>
+                        <div class="kachel" onclick="showSection('fahrzeuge')">
+                            <i class="bi bi-truck kachel-icon"></i>
+                            <h6>Fahrzeuge checken</h6>
+                        </div>
+                        <div class="kachel" onclick="showSection('touren')">
+                            <i class="bi bi-calendar-check kachel-icon"></i>
+                            <h6>Touren planen</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Kunden Section -->
+        <section id="kunden" class="section d-none">
+            <div class="row">
+                <div class="col-12 text-center mb-4">
+                    <h2 class="section-title">Kundenverwaltung</h2>
+                </div>
+
+                <!-- Kunden-Karten -->
+                <div class="col-12 mb-4 kachel-grid" id="kunden-grid">
+                    <!-- Wird dynamisch gefüllt -->
+                </div>
+
+                <!-- Liste der Sendungen pro Kunde -->
+                <div class="col-12 mt-4 card" id="sendungen-list" style="display: none;">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-box me-2"></i>Sendungen dieses Kunden</span>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="closeSendungenList()">Schließen</button>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Sendung ID</th>
+                                    <th>Größe</th>
+                                    <th>Gewicht</th>
+                                    <th>Anmerkung</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sendungen-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sendungen Section -->
+        <section id="sendungen" class="section d-none">
+            <div class="row">
+                <div class="col-12 text-center mb-4">
+                    <h2 class="section-title">Sendungsverwaltung</h2>
+                </div>
+
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <span><i class="bi bi-box-seam me-2"></i>Sendung hinzufügen</span>
+                        </div>
+                        <div class="card-body">
+                            <form id="sendung-form" onsubmit="handleSendungSubmit(event)">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Sendung ID</label>
+                                        <input type="number" class="form-control" id="sendung-id" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Größe (m²)</label>
+                                        <input type="number" step="0.1" class="form-control" id="sendung-grosse" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Gewicht (kg)</label>
+                                        <input type="number" step="0.1" class="form-control" id="sendung-gewicht" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Kunde ID</label>
+                                        <select class="form-select" id="sendung-kunde" required></select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Tour ID</label>
+                                        <select class="form-select" id="sendung-tour" required></select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Lieferadresse</label>
+                                        <input type="text" class="form-control" id="sendung-adresse" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Anmerkung</label>
+                                        <textarea class="form-control" id="sendung-anmerkung" rows="1"></textarea>
+                                    </div>
+                                    <div class="col-12 d-flex justify-content-end gap-2">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="resetSendungForm()">Zurücksetzen</button>
+                                        <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Sendung erstellen</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sendungen Tabelle -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-list-ul me-2"></i>Alle Sendungen</span>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-secondary" onclick="filterSendungen('heavy')">
+                                    <i class="bi bi-weight me-1"></i>Schwere Sendungen
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="filterSendungen('normal')">
+                                    <i class="bi bi-check me-1"></i>Alle anzeigen
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-hover table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Kunde</th>
+                                        <th>Tour</th>
+                                        <th>Größe</th>
+                                        <th>Gewicht</th>
+                                        <th>Anmerkung</th>
+                                        <th>Adresse</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sendungen-tbody-full"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Fahrer Section -->
+        <section id="fahrer" class="section d-none">
+            <div class="row">
+                <div class="col-12 text-center mb-4">
+                    <h2 class="section-title">Fahrerverwaltung</h2>
+                </div>
+
+                <!-- Fahrer hinzufügen -->
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <span><i class="bi bi-person-plus me-2"></i>Fahrer hinzufügen</span>
+                        </div>
+                        <div class="card-body">
+                            <form id="fahrer-form" onsubmit="handleFahrerSubmit(event)">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Fahrer ID</label>
+                                        <input type="number" class="form-control" id="fahrer-id" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Name</label>
+                                        <input type="text" class="form-control" id="fahrer-name" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Führerschein</label>
+                                        <input type="text" class="form-control" id="fahrer-fuehrerschein" required>
+                                    </div>
+                                    <div class="col-12 d-flex justify-content-end gap-2">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="resetFahrerForm()">Zurücksetzen</button>
+                                        <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Fahrer hinzufügen</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fahrer Liste -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-person-vcard me-2"></i>Alle Fahrer</span>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteFahrer()"><i class="bi bi-trash me-1"></i>löschen</button>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-hover table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Führerschein</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fahrer-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Fahrzeuge Section -->
+        <section id="fahrzeuge" class="section d-none">
+            <div class="row">
+                <div class="col-12 text-center mb-4">
+                    <h2 class="section-title">Fahrzeugverwaltung</h2>
+                </div>
+
+                <!-- Fahrzeuge hinzufügen -->
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <span><i class="bi bi-truck me-2"></i>Fahrzeug hinzufügen</span>
+                        </div>
+                        <div class="card-body">
+                            <form id="fahrzeug-form" onsubmit="handleFahrzeugSubmit(event)">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Fahrzeug ID</label>
+                                        <input type="number" class="form-control" id="fahrzeug-id" required>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Defekt</label>
+                                        <select class="form-select" id="fahrzeug-defekt">
+                                            <option value="false">Nein</option>
+                                            <option value="true">Ja</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Kennzeichen</label>
+                                        <input type="text" class="form-control" id="fahrzeug-kennzeichen" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Verteilungszentrum ID</label>
+                                        <select class="form-select" id="fahrzeug-verteilungszentrum" required></select>
+                                    </div>
+                                    <div class="col-12 d-flex justify-content-end gap-2">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="resetFahrzeugForm()">Zurücksetzen</button>
+                                        <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Fahrzeug hinzufügen</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fahrzeuge Liste -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-truck-train me-2"></i>Alle Fahrzeuge</span>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteFahrzeug()"><i class="bi bi-trash me-1"></i>löschen</button>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-hover table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Defekt</th>
+                                        <th>Kennzeichen</th>
+                                        <th>Verteilungszentrum</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fahrzeug-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Defekte Fahrzeuge -->
+                <div class="col-12 mt-4">
+                    <div class="card">
+                        <div class="card-header bg-warning text-dark">
+                            <span><i class="bi bi-exclamation-triangle me-2"></i>Defekte Fahrzeuge</span>
+                        </div>
+                        <div class="card-body" id="defekt-fahrzeuge-container">
+                            <!-- Wird dynamisch gefüllt -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Touren Section -->
+        <section id="touren" class="section d-none">
+            <div class="row">
+                <div class="col-12 text-center mb-4">
+                    <h2 class="section-title">Tourverwaltung</h2>
+                </div>
+
+                <!-- Tour hinzufügen -->
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <span><i class="bi bi-calendar-plus me-2"></i>Tour hinzufügen</span>
+                        </div>
+                        <div class="card-body">
+                            <form id="tour-form" onsubmit="handleTourSubmit(event)">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Tour ID</label>
+                                        <input type="number" class="form-control" id="tour-id" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Anzahl Stopps</label>
+                                        <input type="number" class="form-control" id="tour-stopps" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Tour Zeit</label>
+                                        <input type="time" class="form-control" id="tour-zeit" required>
+                                    </div>
+                                    <div class="col-12 d-flex justify-content-end gap-2">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="resetTourForm()">Zurücksetzen</button>
+                                        <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Tour hinzufügen</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Touren Liste -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-list-ol me-2"></i>Alle Touren</span>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTour()"><i class="bi bi-trash me-1"></i>löschen</button>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-hover table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Stopps</th>
+                                        <th>Zeit</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tour-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fahrer & Tour Kombination -->
+                <div class="col-12 mt-4">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <span><i class="bi bi-people me-2"></i>Fahrer zu Touren</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">Fahrer ID</label>
+                                    <select class="form-select" id="tour-fahrer-select"></select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Tour ID</label>
+                                    <select class="form-select" id="tour-fahrer-tour-select"></select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Datum</label>
+                                    <input type="date" class="form-control" id="tour-fahrer-datum" required>
+                                </div>
+                                <div class="col-md-3 d-flex align-items-end">
+                                    <button class="btn btn-primary w-100" onclick="assignFahrerToTour()">
+                                        <i class="bi bi-link me-1"></i>
+                                        Fahrer zu Tour
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Verteilungszentren Section -->
+        <section id="verteilungszentren" class="section d-none">
+            <div class="row">
+                <div class="col-12 text-center mb-4">
+                    <h2 class="section-title">Verteilungszentren</h2>
+                </div>
+
+                <!-- Verteilungszentrum hinzufügen -->
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <span><i class="bi bi-buildings me-2"></i>Verteilungszentrum hinzufügen</span>
+                        </div>
+                        <div class="card-body">
+                            <form id="verteilungszentrum-form" onsubmit="handleVerteilungszentrumSubmit(event)">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label">ID</label>
+                                        <input type="number" class="form-control" id="vz-id" required>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label">Adresse</label>
+                                        <input type="text" class="form-control" id="vz-adresse" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Telefonnummer</label>
+                                        <input type="text" class="form-control" id="vz-telefon" required>
+                                    </div>
+                                    <div class="col-12 d-flex justify-content-end gap-2">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="resetVZForm()">Zurücksetzen</button>
+                                        <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Hinzufügen</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Verteilungszentren Liste -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <span><i class="bi bi-grid me-2"></i>Alle Verteilungszentren</span>
+                        </div>
+                        <div class="card-body" id="vz-grid">
+                            <!-- Wird dynamisch gefüllt -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container text-center">
+            <p class="mb-2">&copy; 2025 ExpressPack - Ihr Partner für Logistik</p>
+            <p class="small text-muted">Alle Rechte vorbehalten | Impressum | Datenschutz</p>
+        </div>
+    </footer>
+
+    <!-- Modal für Edit -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalTitle">Bearbeiten</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm">
+                        <div class="row g-3" id="editFormContent">
+                            <!-- Wird dynamisch gefüllt -->
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                    <button type="button" class="btn btn-primary" id="editModalSaveBtn">Speichern</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // API Base URL
+        const API_URL = 'http://localhost:7000';
+
+        // Globale Variablen
+        let editElement = null;
+        let editData = null;
+
+        // Dashboard Statistics
+        async function loadDashboard() {
+            try {
+                const response = await fetch(`${API_URL}/sendung/count/`);
+                const data = await response.json();
+
+                document.getElementById('total-sendungen').textContent = data[0].anzahl_sendungen;
+
+                const customersResponse = await fetch(`${API_URL}/kunde/`);
+                const customers = await customersResponse.json();
+                document.getElementById('total-kunden').textContent = customers.length;
+
+                const driversResponse = await fetch(`${API_URL}/fahrer/`);
+                const drivers = await driversResponse.json();
+                document.getElementById('active-fahrer').textContent = drivers.length;
+
+                const defectsResponse = await fetch(`${API_URL}/fahrzeug/defekt/`);
+                const defects = await defectsResponse.json();
+                document.getElementById('defekt-fahrzeuge').textContent = defects.length;
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+
+        // Kunden Grid
+        async function loadKundenGrid() {
+            const response = await fetch(`${API_URL}/kunde/`);
+            const kunden = await response.json();
+
+            const container = document.getElementById('kunden-grid');
+            container.innerHTML = kunden.map(k => `
+                <div class="kachel" onclick="viewKunde(${k.kunde_id})">
+                    <i class="bi bi-person-badge kachel-icon"></i>
+                    <h6>${k.name}</h6>
+                    <p class="text-muted small mb-0">${k.kunde_id}</p>
+                </div>
+            `).join('');
+
+            // Load sendungen for each kunde
+            for (const k of kunden) {
+                const sendungsResponse = await fetch(`${API_URL}/kunde/${k.kunde_id}/sendungen/`);
+                const sendungs = await sendungsResponse.json();
+
+                const sendungList = document.getElementById('sendungen-list');
+                const tbody = document.getElementById('sendungen-tbody');
+
+                if (sendungs.length > 0) {
+                    sendungList.style.display = 'block';
+                    tbody.innerHTML = sendungs.map(s => `
+                        <tr>
+                            <td>${s.sendung_id}</td>
+                            <td>${s.groesse}</td>
+                            <td>${s.gewicht}</td>
+                            <td>${s.anmerkung || '-'}</td>
+                        </tr>
+                    `).join('');
+                }
+            }
+        }
+
+        function closeSendungenList() {
+            document.getElementById('sendungen-list').style.display = 'none';
+        }
+
+        // Sendungen
+        async function loadSendungen() {
+            const response = await fetch(`${API_URL}/sendung/`);
+            const sendungen = await response.json();
+
+            const tbody = document.getElementById('sendungen-tbody-full');
+            if (sendungen.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">Keine Sendungen</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = sendungen.map(s => `
+                <tr>
+                    <td>${s.sendung_id}</td>
+                    <td>${s.kunde_id}</td>
+                    <td>${s.tour_id}</td>
+                    <td>${s.groesse} m²</td>
+                    <td>${s.gewicht} kg</td>
+                    <td>${s.anmerkung || '-'}</td>
+                    <td>${s.adresse_liefer}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="editSendung(${s.sendung_id}, ${s.kunde_id}, ${s.tour_id})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteSendung(${s.sendung_id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Load dropdowns
+        async function loadDropdowns() {
+            // Kunden dropdown
+            const kundeSelect = document.getElementById('sendung-kunde');
+            const kundeResponse = await fetch(`${API_URL}/kunde/`);
+            const kunden = await kundeResponse.json();
+            kundeSelect.innerHTML = kunden.map(k => `<option value="${k.kunde_id}">${k.name} (${k.kunde_id})</option>`).join('');
+
+            // Touren dropdown
+            const tourSelect = document.getElementById('sendung-tour');
+            const tourResponse = await fetch(`${API_URL}/tour/`);
+            const tours = await tourResponse.json();
+            tourSelect.innerHTML = tours.map(t => `<option value="${t.tour_id}">${t.tour_stopps} Stopps - ${t.tour_zeit} Uhr</option>`).join('');
+
+            // Verteilungszentren dropdown
+            const vzSelect = document.getElementById('fahrzeug-verteilungszentrum');
+            const vzResponse = await fetch(`${API_URL}/verteilungszentrum/`);
+            const vzen = await vzResponse.json();
+            vzSelect.innerHTML = vzen.map(v => `<option value="${v.verteilungszentrum_id}">${v.adresse}</option>`).join('');
+
+            // Fahrer dropdown
+            const fahrerSelect = document.getElementById('tour-fahrer-select');
+            const fahrerResponse = await fetch(`${API_URL}/fahrer/`);
+            const fahrer = await fahrerResponse.json();
+            fahrerSelect.innerHTML = fahrer.map(f => `<option value="${f.fahrer_id}">${f.name} (${f.fahrer_id})</option>`).join('');
+
+            // Fahrer-Tour dropdown
+            const fahrerTourSelect = document.getElementById('tour-fahrer-tour-select');
+            fahrerTourSelect.innerHTML = tours.map(t => `<option value="${t.tour_id}">${t.tour_stopps} Stopps - ${t.tour_zeit} Uhr</option>`).join('');
+
+            // Datum für Fahrer-Tour
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('tour-fahrer-datum').value = today;
+        }
+
+        // Sendung Submit
+        async function handleSendungSubmit(event) {
+            event.preventDefault();
+
+            const data = {
+                sendung_id: parseInt(document.getElementById('sendung-id').value),
+                groesse: parseFloat(document.getElementById('sendung-grosse').value),
+                gewicht: parseFloat(document.getElementById('sendung-gewicht').value),
+                kunde_id: parseInt(document.getElementById('sendung-kunde').value),
+                tour_id: parseInt(document.getElementById('sendung-tour').value),
+                adresse_liefer: document.getElementById('sendung-adresse').value,
+                anmerkung: document.getElementById('sendung-anmerkung').value
+            };
+
+            await fetch(`${API_URL}/sendung/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            alert('Sendung erstellt!');
+            event.target.reset();
+            loadSendungen();
+        }
+
+        function resetSendungForm() {
+            document.getElementById('sendung-form').reset();
+        }
+
+        // Fahrer Submit
+        async function handleFahrerSubmit(event) {
+            event.preventDefault();
+
+            const data = {
+                fahrer_id: parseInt(document.getElementById('fahrer-id').value),
+                name: document.getElementById('fahrer-name').value,
+                fuehrerschein: document.getElementById('fahrer-fuehrerschein').value
+            };
+
+            await fetch(`${API_URL}/fahrer/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            alert('Fahrer hinzugefügt!');
+            event.target.reset();
+            loadFahrer();
+        }
+
+        // Fahrerauftrag
+        async function loadFahrer() {
+            const response = await fetch(`${API_URL}/fahrer/`);
+            const fahrer = await response.json();
+
+            const tbody = document.getElementById('fahrer-tbody');
+            if (fahrer.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center">Keine Fahrer</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = fahrer.map(f => `
+                <tr>
+                    <td>${f.fahrer_id}</td>
+                    <td>${f.name}</td>
+                    <td>${f.fuehrerschein}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="editFahrer(${f.fahrer_id})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteFahrer(${f.fahrer_id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function resetFahrerForm() {
+            document.getElementById('fahrer-form').reset();
+        }
+
+        // Fahrzeug Submit
+        async function handleFahrzeugSubmit(event) {
+            event.preventDefault();
+
+            const data = {
+                fahrzeug_id: parseInt(document.getElementById('fahrzeug-id').value),
+                defekt: document.getElementById('fahrzeug-defekt').value === 'true',
+                kennzeichen: document.getElementById('fahrzeug-kennzeichen').value,
+                verteilungszentrum_id: parseInt(document.getElementById('fahrzeug-verteilungszentrum').value)
+            };
+
+            await fetch(`${API_URL}/fahrzeug/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            alert('Fahrzeug hinzugefügt!');
+            event.target.reset();
+            loadFahrzeuge();
+        }
+
+        // Fahrzeugauftrag
+        async function loadFahrzeuge() {
+            const response = await fetch(`${API_URL}/fahrzeug/`);
+            const fahrzeuge = await response.json();
+
+            const tbody = document.getElementById('fahrzeug-tbody');
+            if (fahrzeug.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">Keine Fahrzeuge</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = fahrzeuge.map(f => `
+                <tr>
+                    <td>${f.fahrzeug_id}</td>
+                    <td class="${f.defekt ? 'text-danger' : 'text-success'}">
+                        <i class="bi bi-${f.defekt ? 'exclamation-circle' : 'check-circle'}"></i>
+                        ${f.defekt ? 'Defekt' : 'Betriebsbereit'}
+                    </td>
+                    <td>${f.kennzeichen}</td>
+                    <td>${f.adresse}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="editFahrzeug(${f.fahrzeug_id})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteFahrzeug(${f.fahrzeug_id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Load defekte
+            const defektResponse = await fetch(`${API_URL}/fahrzeug/defekt/`);
+            const defekte = await defektResponse.json();
+
+            const container = document.getElementById('defekt-fahrzeuge-container');
+            if (defekte.length === 0) {
+                container.innerHTML = '<p class="text-muted">Keine defekten Fahrzeuge</p>';
+            } else {
+                container.innerHTML = defekte.map(f => `
+                    <div class="alert alert-warning mb-2">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>${f.kennzeichen}</strong> (${f.fahrzeug_id}) ist defekt<br>
+                        Standort: ${f.adresse}
+                    </div>
+                `).join('');
+            }
+        }
+
+        function resetFahrzeugForm() {
+            document.getElementById('fahrzeug-form').reset();
+        }
+
+        // Tour Submit
+        async function handleTourSubmit(event) {
+            event.preventDefault();
+
+            const data = {
+                tour_id: parseInt(document.getElementById('tour-id').value),
+                tour_stopps: parseInt(document.getElementById('tour-stopps').value),
+                tour_zeit: document.getElementById('tour-zeit').value
+            };
+
+            await fetch(`${API_URL}/tour/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            alert('Tour hinzugefügt!');
+            event.target.reset();
+            loadTour();
+        }
+
+        // Tourauftrag
+        async function loadTour() {
+            const response = await fetch(`${API_URL}/tour/`);
+            const tours = await response.json();
+
+            const tbody = document.getElementById('tour-tbody');
+            if (tours.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center">Keine Touren</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = tours.map(t => `
+                <tr>
+                    <td>${t.tour_id}</td>
+                    <td>${t.tour_stopps}</td>
+                    <td>${t.tour_zeit}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="editTour(${t.tour_id})">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteTour(${t.tour_id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function resetTourForm() {
+            document.getElementById('tour-form').reset();
+        }
+
+        // Verteilungszentrum Submit
+        async function handleVerteilungszentrumSubmit(event) {
+            event.preventDefault();
+
+            const data = {
+                verteilungszentrum_id: parseInt(document.getElementById('vz-id').value),
+                adresse: document.getElementById('vz-adresse').value,
+                telefonnummer: document.getElementById('vz-telefon').value
+            };
+
+            await fetch(`${API_URL}/verteilungszentrum/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            alert('Verteilungszentrum hinzugefügt!');
+            event.target.reset();
+            loadVZ();
+        }
+
+        // Verteilungszentrum
+        async function loadVZ() {
+            const response = await fetch(`${API_URL}/verteilungszentrum/`);
+            const vzen = await response.json();
+
+            const container = document.getElementById('vz-grid');
+            container.innerHTML = vzen.map(v => `
+                <div class="kachel" onclick="editVerteilungszentrum(${v.verteilungszentrum_id})">
+                    <i class="bi bi-buildings-fill kachel-icon"></i>
+                    <h6>${v.adresse}</h6>
+                    <p class="small mb-0"><i class="bi bi-telephone"></i> ${v.telefonnummer}</p>
+                    <p class="text-muted small mb-0">${v.verteilungszentrum_id}</p>
+                </div>
+            `).join('');
+        }
+
+        function resetVZForm() {
+            document.getElementById('verteilungszentrum-form').reset();
+        }
+
+        // Assign Fahrer to Tour
+        async function assignFahrerToTour() {
+            const fahrerId = document.getElementById('tour-fahrer-select').value;
+            const tourId = document.getElementById('tour-fahrer-tour-select').value;
+            const datum = document.getElementById('tour-fahrer-datum').value;
+
+            await fetch(`${API_URL}/tour/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    tour_id: tourId,
+                    tour_stopps: 1,
+                    tour_zeit: '00:00:00'
+                })
+            });
+
+            alert('Fahrer zu Tour zugeordnet!');
+            loadFahrer();
+            loadTour();
+            document.getElementById('tour-fahrer-datum').value = '';
+        }
+
+        // Navigation
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.add('d-none'));
+            document.getElementById(sectionId).classList.remove('d-none');
+            document.querySelector('.nav-link.active').classList.remove('active');
+            event.currentTarget?.classList.add('active');
+        }
+
+        // Edit Modal Functions
+        function editElement(name, data) {
+            editElement = name;
+            editData = data;
+            document.getElementById('editModalTitle').textContent = `${name} bearbeiten`;
+
+            let html = '';
+            switch(name) {
+                case 'kunde':
+                    html = `
+                        <div class="col-md-6">
+                            <label class="form-label">${name === 'kunde' ? 'Name' : 'Name'}</label>
+                            <input type="text" class="form-control" id="edit-${name}-name" value="${data.name}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">${name === 'kunde' ? 'Telefon' : 'Telefon'}</label>
+                            <input type="text" class="form-control" id="edit-${name}-telefon" value="${data.telefonnummer}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">${name === 'kunde' ? 'E-Mail' : 'E-Mail'}</label>
+                            <input type="email" class="form-control" id="edit-${name}-mail" value="${data.mailadresse}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">${name === 'kunde' ? 'Rücksendeadresse' : 'Rücksendeadresse'}</label>
+                            <textarea class="form-control" id="edit-${name}-adresse-rechung" rows="2">${data.adresse_rechung}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">${name === 'kunde' ? 'Lieferadresse' : 'Lieferadresse'}</label>
+                            <textarea class="form-control" id="edit-${name}-adresse-liefer" rows="2">${data.adresse_liefer}</textarea>
+                        </div>
+                    `;
+                    break;
+                case 'sendung':
+                    html = `
+                        <div class="col-md-3">
+                            <label class="form-label">Sendung ID</label>
+                            <input type="number" class="form-control" id="edit-${name}-id" value="${data.sendung_id}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Größe</label>
+                            <input type="number" step="0.1" class="form-control" id="edit-${name}-grosse" value="${data.groesse}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Gewicht</label>
+                            <input type="number" step="0.1" class="form-control" id="edit-${name}-gewicht" value="${data.gewicht}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Kunde ID</label>
+                            <input type="number" class="form-control" id="edit-${name}-kunde" value="${data.kunde_id}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Lieferadresse</label>
+                            <input type="text" class="form-control" id="edit-${name}-adresse" value="${data.adresse_liefer}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Tour ID</label>
+                            <input type="number" class="form-control" id="edit-${name}-tour" value="${data.tour_id}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Anmerkung</label>
+                            <input type="text" class="form-control" id="edit-${name}-anmerkung" value="${data.anmerkung || ''}">
+                        </div>
+                    `;
+                    break;
+                case 'fahrer':
+                    html = `
+                        <div class="col-md-4">
+                            <label class="form-label">Fahrer ID</label>
+                            <input type="number" class="form-control" id="edit-${name}-id" value="${data.fahrer_id}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" id="edit-${name}-name" value="${data.name}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Führerschein</label>
+                            <input type="text" class="form-control" id="edit-${name}-fuehrerschein" value="${data.fuehrerschein}">
+                        </div>
+                    `;
+                    break;
+                case 'fahrzeug':
+                    html = `
+                        <div class="col-md-3">
+                            <label class="form-label">Fahrzeug ID</label>
+                            <input type="number" class="form-control" id="edit-${name}-id" value="${data.fahrzeug_id}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Defekt</label>
+                            <select class="form-select" id="edit-${name}-defekt">
+                                <option value="false" ${data.defekt ? 'selected' : ''}>Nein</option>
+                                <option value="true" ${!data.defekt ? 'selected' : ''}>Ja</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Kennzeichen</label>
+                            <input type="text" class="form-control" id="edit-${name}-kennzeichen" value="${data.kennzeichen}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">VZ ID</label>
+                            <input type="number" class="form-control" id="edit-${name}-vz" value="${data.verteilungszentrum_id}">
+                        </div>
+                    `;
+                    break;
+                case 'tour':
+                    html = `
+                        <div class="col-md-3">
+                            <label class="form-label">Tour ID</label>
+                            <input type="number" class="form-control" id="edit-${name}-id" value="${data.tour_id}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Stopps</label>
+                            <input type="number" class="form-control" id="edit-${name}-stopps" value="${data.tour_stopps}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Zeit</label>
+                            <input type="time" class="form-control" id="edit-${name}-zeit" value="${data.tour_zeit}">
+                        </div>
+                    `;
+                    break;
+                case 'verteilungszentrum':
+                    html = `
+                        <div class="col-md-3">
+                            <label class="form-label">ID</label>
+                            <input type="number" class="form-control" id="edit-${name}-id" value="${data.verteilungszentrum_id}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Adresse</label>
+                            <input type="text" class="form-control" id="edit-${name}-adresse" value="${data.adresse}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Telefon</label>
+                            <input type="text" class="form-control" id="edit-${name}-telefon" value="${data.telefonnummer}">
+                        </div>
+                    `;
+                    break;
+            }
+
+            document.getElementById('editFormContent').innerHTML = html;
+
+            const modal = new bootstrap.Modal(document.getElementById('editModal'));
+            modal.show();
+        }
+
+        // Delete Functions
+        async function deleteKunde(id) {
+            if (!confirm('Kunde löschen?')) return;
+            await fetch(`${API_URL}/kunde/${id}`, { method: 'DELETE' });
+            loadKundenGrid();
+        }
+
+        async function deleteSendung(id) {
+            if (!confirm('Sendung löschen?')) return;
+            await fetch(`${API_URL}/sendung/${id}`, { method: 'DELETE' });
+            loadSendungen();
+        }
+
+        async function deleteFahrer(id) {
+            if (!confirm('Fahrer löschen?')) return;
+            await fetch(`${API_URL}/fahrer/${id}`, { method: 'DELETE' });
+            loadFahrer();
+        }
+
+        async function deleteFahrzeug(id) {
+            if (!confirm('Fahrzeug löschen?')) return;
+            await fetch(`${API_URL}/fahrzeug/${id}`, { method: 'DELETE' });
+            loadFahrzeuge();
+        }
+
+        async function deleteTour(id) {
+            if (!confirm('Tour löschen?')) return;
+            await fetch(`${API_URL}/tour/${id}`, { method: 'DELETE' });
+            loadTour();
+        }
+
+        async function deleteVerteilungszentrum(id) {
+            if (!confirm('Verteilungszentrum löschen?')) return;
+            await fetch(`${API_URL}/verteilungszentrum/${id}`, { method: 'DELETE' });
+            loadVZ();
+        }
+
+        // Save Edit
+        document.getElementById('editModalSaveBtn').addEventListener('click', async () => {
+            if (!editElement || !editData) return;
+
+            const url = editElement === 'sendung'
+                ? `${API_URL}/sendung/${editData.sendung_id}`
+                : `${API_URL}/${editElement}/${editData[editElement === 'verteilungszentrum' ? 'id' : editData.name.replace(/\s/g, '')]}${editElement === 'tour' ? '' : ''}`;
+
+            let data;
+            switch(editElement) {
+                case 'kunde':
+                    data = {
+                        kunde_id: editData.kunde_id,
+                        name: document.getElementById('edit-kunde-name').value,
+                        telefonnummer: document.getElementById('edit-kunde-telefon').value,
+                        mailadresse: document.getElementById('edit-kunde-mail').value,
+                        adresse_rechung: document.getElementById('edit-kunde-adresse-rechung').value,
+                        adresse_liefer: document.getElementById('edit-kunde-adresse-liefer').value
+                    };
+                    break;
+                case 'sendung':
+                    data = {
+                        sendung_id: document.getElementById('edit-sendung-id').value,
+                        groesse: parseFloat(document.getElementById('edit-sendung-grosse').value),
+                        gewicht: parseFloat(document.getElementById('edit-sendung-gewicht').value),
+                        kunde_id: parseInt(document.getElementById('edit-sendung-kunde').value),
+                        tour_id: parseInt(document.getElementById('edit-sendung-tour').value),
+                        adresse_liefer: document.getElementById('edit-sendung-adresse').value,
+                        anmerkung: document.getElementById('edit-sendung-anmerkung').value
+                    };
+                    break;
+                case 'fahrer':
+                    data = {
+                        fahrer_id: document.getElementById('edit-fahrer-id').value,
+                        name: document.getElementById('edit-fahrer-name').value,
+                        fuehrerschein: document.getElementById('edit-fahrer-fuehrerschein').value
+                    };
+                    break;
+                case 'fahrzeug':
+                    data = {
+                        fahrzeug_id: document.getElementById('edit-fahrzeug-id').value,
+                        defekt: document.getElementById('edit-fahrzeug-defekt').value === 'true',
+                        kennzeichen: document.getElementById('edit-fahrzeug-kennzeichen').value,
+                        verteilungszentrum_id: parseInt(document.getElementById('edit-fahrzeug-vz').value)
+                    };
+                    break;
+                case 'tour':
+                    data = {
+                        tour_id: document.getElementById('edit-tour-id').value,
+                        tour_stopps: parseInt(document.getElementById('edit-tour-stopps').value),
+                        tour_zeit: document.getElementById('edit-tour-zeit').value
+                    };
+                    break;
+                case 'verteilungszentrum':
+                    data = {
+                        verteilungszentrum_id: document.getElementById('edit-verteilungszentrum-id').value,
+                        adresse: document.getElementById('edit-verteilungszentrum-adresse').value,
+                        telefonnummer: document.getElementById('edit-verteilungszentrum-telefon').value
+                    };
+                    break;
+            }
+
+            await fetch(`${API_URL}/${editElement}/${editData.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+            editElement = null;
+            editData = null;
+            loadDashboard();
+            loadSendungen();
+            loadFahrer();
+            loadFahrzeuge();
+            loadTour();
+            loadVZ();
+            loadKundenGrid();
+        });
+
+        // View Customer Sendungen
+        async function viewKunde(id) {
+            const response = await fetch(`${API_URL}/kunde/${id}/sendungen/`);
+            const sendungen = await response.json();
+
+            const tbody = document.getElementById('sendungen-tbody');
+            tbody.innerHTML = sendungen.map(s => `
+                <tr>
+                    <td>${s.sendung_id}</td>
+                    <td>${s.groesse}</td>
+                    <td>${s.gewicht}</td>
+                    <td>${s.anmerkung || '-'}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('sendungen-list').style.display = 'block';
+        }
+
+        // Filter Sendungen
+        async function filterSendungen(type) {
+            const response = await fetch(`${API_URL}/sendung/`);
+            let sendungen = await response.json();
+
+            if (type === 'heavy') {
+                const heavyResponse = await fetch(`${API_URL}/sendung/heavy/`);
+                sendungen = await heavyResponse.json();
+            }
+
+            const tbody = document.getElementById('sendungen-tbody-full');
+            if (sendungen.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">Keine Sendungen</td></tr>';
+            } else {
+                tbody.innerHTML = sendungen.map(s => `
+                    <tr>
+                        <td>${s.sendung_id}</td>
+                        <td>${s.kunde_id}</td>
+                        <td>${s.tour_id}</td>
+                        <td>${s.groesse} m²</td>
+                        <td>${s.gewicht} kg</td>
+                        <td>${s.anmerkung || '-'}</td>
+                        <td>${s.adresse_liefer}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editSendung(${s.sendung_id}, ${s.kunde_id}, ${s.tour_id})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSendung(${s.sendung_id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // Load Dropdowns
+        async function loadEditDropdowns() {
+            // Kunden
+            const kundeSelect = document.getElementById('edit-sendung-kunde');
+            const kundeResponse = await fetch(`${API_URL}/kunde/`);
+            const kunden = await kundeResponse.json();
+            kundeSelect.innerHTML = kunden.map(k => `<option value="${k.kunde_id}">${k.name} (${k.kunde_id})</option>`).join('');
+
+            // Touren
+            const tourSelect = document.getElementById('edit-sendung-tour');
+            const tourResponse = await fetch(`${API_URL}/tour/`);
+            const tours = await tourResponse.json();
+            tourSelect.innerHTML = tours.map(t => `<option value="${t.tour_id}">${t.tour_stopps} Stopps - ${t.tour_zeit} Uhr</option>`).join('');
+
+            // Verteilungszentren
+            const vzSelect = document.getElementById('edit-fahrzeug-vz');
+            const vzResponse = await fetch(`${API_URL}/verteilungszentrum/`);
+            const vzen = await vzResponse.json();
+            vzSelect.innerHTML = vzen.map(v => `<option value="${v.verteilungszentrum_id}">${v.adresse}</option>`).join('');
+
+            // Fahrer
+            const fahrerSelect = document.getElementById('edit-tour-fahrer-select');
+            const fahrerResponse = await fetch(`${API_URL}/fahrer/`);
+            const fahrer = await fahrerResponse.json();
+            fahrerSelect.innerHTML = fahrer.map(f => `<option value="${f.fahrer_id}">${f.name} (${f.fahrer_id})</option>`).join('');
+
+            // Touren
+            const tourSelect = document.getElementById('edit-tour-fahrer-tour-select');
+            tourSelect.innerHTML = tours.map(t => `<option value="${t.tour_id}">${t.tour_stopps} Stopps - ${t.tour_zeit} Uhr</option>`).join('');
+        }
+
+        // Initial load
+        async function init() {
+            await loadDashboard();
+            await loadDropdowns();
+            await loadKundenGrid();
+            await loadSendungen();
+            await loadFahrer();
+            await loadFahrzeuge();
+            await loadTour();
+            await loadVZ();
+        }
+
+        init();
+    </script>
+</body>
+</html>
