@@ -769,9 +769,9 @@
         // API Base URL
         const API_URL = 'http://localhost:7000';
 
-        // Globale Variablen
-        let editElement = null;
-        let editData = null;
+        // Globale Variablen für den Edit-Modal
+        let currentEditType = null;
+        let currentEditData = null;
 
         // Dashboard Statistics
         async function loadDashboard() {
@@ -957,6 +957,7 @@
         // Fahrerauftrag
         async function loadFahrer() {
             const response = await fetch(`${API_URL}/fahrer/`);
+            if (!response.ok) throw new Error('Error loading drivers');
             const fahrer = await response.json();
 
             const tbody = document.getElementById('fahrer-tbody');
@@ -1014,7 +1015,7 @@
             const fahrzeuge = await response.json();
 
             const tbody = document.getElementById('fahrzeug-tbody');
-            if (fahrzeug.length === 0) {
+            if (fahrzeuge.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" class="text-center">Keine Fahrzeuge</td></tr>';
                 return;
             }
@@ -1178,17 +1179,56 @@
         }
 
         // Navigation
-        function showSection(sectionId) {
+        window.showSection = function(sectionId) {
             document.querySelectorAll('.section').forEach(s => s.classList.add('d-none'));
             document.getElementById(sectionId).classList.remove('d-none');
-            document.querySelector('.nav-link.active').classList.remove('active');
-            event.currentTarget?.classList.add('active');
-        }
+            const navItems = document.querySelectorAll('.nav-link');
+            navItems.forEach(item => item.classList.remove('active'));
+            navItems.forEach(item => item.classList.contains('active') ? item.classList.remove('active') : null);
+            const activeNavItem = navItems.find(item => item.getAttribute('href') === '#' + sectionId);
+            if (activeNavItem) activeNavItem.classList.add('active');
+        };
 
         // Edit Modal Functions
+        async function editSendung(id, kunde_id, tour_id) {
+            const response = await fetch(`${API_URL}/sendung/${id}`);
+            const data = await response.json();
+            editElement('sendung', data);
+        }
+
+        async function editFahrer(id) {
+            const response = await fetch(`${API_URL}/fahrer/${id}`);
+            const data = await response.json();
+            editElement('fahrer', data);
+        }
+
+        async function editFahrzeug(id) {
+            const response = await fetch(`${API_URL}/fahrzeug/${id}`);
+            const data = await response.json();
+            editElement('fahrzeug', data);
+        }
+
+        async function editTour(id) {
+            const response = await fetch(`${API_URL}/tour/${id}`);
+            const data = await response.json();
+            editElement('tour', data);
+        }
+
+        async function editVerteilungszentrum(id) {
+            const response = await fetch(`${API_URL}/verteilungszentrum/${id}`);
+            const data = await response.json();
+            editElement('verteilungszentrum', data);
+        }
+
+        async function editKunde(id) {
+            const response = await fetch(`${API_URL}/kunde/${id}`);
+            const data = await response.json();
+            editElement('kunde', data);
+        }
+
         function editElement(name, data) {
-            editElement = name;
-            editData = data;
+            currentEditType = name;
+            currentEditData = data;
             document.getElementById('editModalTitle').textContent = `${name} bearbeiten`;
 
             let html = '';
@@ -1367,17 +1407,17 @@
 
         // Save Edit
         document.getElementById('editModalSaveBtn').addEventListener('click', async () => {
-            if (!editElement || !editData) return;
+            if (!currentEditType || !currentEditData) return;
 
-            const url = editElement === 'sendung'
-                ? `${API_URL}/sendung/${editData.sendung_id}`
-                : `${API_URL}/${editElement}/${editData[editElement === 'verteilungszentrum' ? 'id' : editData.name.replace(/\s/g, '')]}${editElement === 'tour' ? '' : ''}`;
+            const url = currentEditType === 'sendung'
+                ? `${API_URL}/sendung/${currentEditData.sendung_id}`
+                : `${API_URL}/${currentEditType}/${currentEditData[currentEditType === 'verteilungszentrum' ? 'id' : currentEditData.name.replace(/\s/g, '')]}${currentEditType === 'tour' ? '' : ''}`;
 
-            let data;
-            switch(editElement) {
+            let editDataPayload;
+            switch(currentEditType) {
                 case 'kunde':
-                    data = {
-                        kunde_id: editData.kunde_id,
+                    editDataPayload = {
+                        kunde_id: currentEditData.kunde_id,
                         name: document.getElementById('edit-kunde-name').value,
                         telefonnummer: document.getElementById('edit-kunde-telefon').value,
                         mailadresse: document.getElementById('edit-kunde-mail').value,
@@ -1386,7 +1426,7 @@
                     };
                     break;
                 case 'sendung':
-                    data = {
+                    editDataPayload = {
                         sendung_id: document.getElementById('edit-sendung-id').value,
                         groesse: parseFloat(document.getElementById('edit-sendung-grosse').value),
                         gewicht: parseFloat(document.getElementById('edit-sendung-gewicht').value),
@@ -1397,14 +1437,14 @@
                     };
                     break;
                 case 'fahrer':
-                    data = {
+                    editDataPayload = {
                         fahrer_id: document.getElementById('edit-fahrer-id').value,
                         name: document.getElementById('edit-fahrer-name').value,
                         fuehrerschein: document.getElementById('edit-fahrer-fuehrerschein').value
                     };
                     break;
                 case 'fahrzeug':
-                    data = {
+                    editDataPayload = {
                         fahrzeug_id: document.getElementById('edit-fahrzeug-id').value,
                         defekt: document.getElementById('edit-fahrzeug-defekt').value === 'true',
                         kennzeichen: document.getElementById('edit-fahrzeug-kennzeichen').value,
@@ -1412,14 +1452,14 @@
                     };
                     break;
                 case 'tour':
-                    data = {
+                    editDataPayload = {
                         tour_id: document.getElementById('edit-tour-id').value,
                         tour_stopps: parseInt(document.getElementById('edit-tour-stopps').value),
                         tour_zeit: document.getElementById('edit-tour-zeit').value
                     };
                     break;
                 case 'verteilungszentrum':
-                    data = {
+                    editDataPayload = {
                         verteilungszentrum_id: document.getElementById('edit-verteilungszentrum-id').value,
                         adresse: document.getElementById('edit-verteilungszentrum-adresse').value,
                         telefonnummer: document.getElementById('edit-verteilungszentrum-telefon').value
@@ -1427,15 +1467,15 @@
                     break;
             }
 
-            await fetch(`${API_URL}/${editElement}/${editData.id}`, {
+            await fetch(`${API_URL}/${currentEditType}/${currentEditData.id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                body: JSON.stringify(editDataPayload)
             });
 
             bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-            editElement = null;
-            editData = null;
+            currentEditType = null;
+            currentEditData = null;
             loadDashboard();
             loadSendungen();
             loadFahrer();
@@ -1525,9 +1565,9 @@
             const fahrer = await fahrerResponse.json();
             fahrerSelect.innerHTML = fahrer.map(f => `<option value="${f.fahrer_id}">${f.name} (${f.fahrer_id})</option>`).join('');
 
-            // Touren
-            const tourSelect = document.getElementById('edit-tour-fahrer-tour-select');
-            tourSelect.innerHTML = tours.map(t => `<option value="${t.tour_id}">${t.tour_stopps} Stopps - ${t.tour_zeit} Uhr</option>`).join('');
+            // Touren (für Fahrer)
+            const tourSelectTour = document.getElementById('edit-tour-fahrer-tour-select');
+            tourSelectTour.innerHTML = tours.map(t => `<option value="${t.tour_id}">${t.tour_stopps} Stopps - ${t.tour_zeit} Uhr</option>`).join('');
         }
 
         // Initial load
