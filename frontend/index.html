@@ -364,9 +364,27 @@
                     </div>
                 </div>
 
-                <!-- Kunden-Karten -->
-                <div class="col-12 mb-4 kachel-grid" id="kunden-grid">
-                    <!-- Wird dynamisch gefüllt -->
+                <!-- Kunden Liste -->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <span><i class="bi bi-people-fill me-2"></i>Alle Kunden</span>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-hover table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Telefon</th>
+                                        <th>E-Mail</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="kunden-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Liste der Sendungen pro Kunde -->
@@ -412,7 +430,7 @@
                                         <input type="number" class="form-control" id="sendung-id" required>
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label">Größe (m²)</label>
+                                        <label class="form-label">Paketgröße</label>
                                         <input type="number" step="0.1" class="form-control" id="sendung-grosse" required>
                                     </div>
                                     <div class="col-md-3">
@@ -425,7 +443,9 @@
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label">Tour ID</label>
-                                        <select class="form-select" id="sendung-tour" required></select>
+                                        <select class="form-select" id="sendung-tour" required>
+                                            <option value="0">-- Keine Tour --</option>
+                                        </select>
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Lieferadresse</label>
@@ -809,9 +829,26 @@
         // API Base URL
         const API_URL = 'http://localhost:7000';
 
+        // Zeit formatieren von HH:MM:SS zu HH:MM
+        function formatTime(timeStr) {
+            return timeStr ? timeStr.split(':')[0] + ':' + timeStr.split(':')[1] : '';
+        }
+
         // Globale Variablen für den Edit-Modal
         let currentEditType = null;
         let currentEditData = null;
+
+        // Größen-Kategorien Mapping
+        function getSizeCategory(size) {
+            const categories = {
+                1: 'Klein',
+                2: 'Mittel',
+                3: 'Groß',
+                4: 'Sehr groß',
+                5: 'Übergroß'
+            };
+            return categories[size] || 'Unbekannt';
+        }
 
         // Sortierfunktion
         function sortData(data, field, ascending = true) {
@@ -865,27 +902,33 @@
                 let kunden = await response.json();
                 kunden = sortData(kunden, 'kunde_id', true); // Sortiere nach ID aufsteigend
 
-                const container = document.getElementById('kunden-grid');
-                container.innerHTML = kunden.map(k => `
-                    <div class="kachel">
-                        <i class="bi bi-person-badge kachel-icon"></i>
-                        <h6>${k.name}</h6>
-                        <p class="text-muted small mb-0">${k.kunde_id}</p>
-                        <div class="d-flex gap-2 mt-2">
-                            <button class="btn btn-sm btn-outline-primary flex-grow-1" onclick="editKunde(${k.kunde_id})">
-                                <i class="bi bi-pencil"></i> Bearbeiten
+                const tbody = document.getElementById('kunden-tbody');
+                if (kunden.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Keine Kunden</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = kunden.map(k => `
+                    <tr>
+                        <td>${k.kunde_id}</td>
+                        <td>${k.name}</td>
+                        <td>${k.telefonnummer}</td>
+                        <td>${k.mailadresse}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editKunde(${k.kunde_id})">
+                                <i class="bi bi-pencil"></i>
                             </button>
                             <button class="btn btn-sm btn-outline-danger" onclick="deleteKunde(${k.kunde_id})">
                                 <i class="bi bi-trash"></i>
                             </button>
-                        </div>
-                    </div>
+                        </td>
+                    </tr>
                 `).join('');
             } catch (error) {
                 console.error('Error loading kunden:', error);
-                const container = document.getElementById('kunden-grid');
-                if (container) {
-                    container.innerHTML = '<p class="text-danger">Fehler beim Laden der Kunden</p>';
+                const tbody = document.getElementById('kunden-tbody');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Fehler beim Laden der Kunden</td></tr>';
                 }
             }
         }
@@ -913,7 +956,7 @@
                         <td>${s.sendung_id}</td>
                         <td>${s.kunde_id}</td>
                         <td>${s.tour_id}</td>
-                        <td>${s.groesse} m²</td>
+                        <td>${getSizeCategory(s.groesse)}</td>
                         <td>${s.gewicht} kg</td>
                         <td>${s.anmerkung || '-'}</td>
                         <td>${s.adresse_liefer}</td>
@@ -948,7 +991,7 @@
             const tourSelect = document.getElementById('sendung-tour');
             const tourResponse = await fetch(`${API_URL}/tour/`);
             const tours = await tourResponse.json();
-            tourSelect.innerHTML = tours.map(t => `<option value="${t.tour_id}">${t.tour_standart} - ${t.tour_zeit}</option>`).join('');
+            tourSelect.innerHTML = '<option value="0">-- Keine Tour --</option>' + tours.map(t => `<option value="${t.tour_id}">${formatTime(t.tour_zeit)}</option>`).join('');
 
             // Verteilungszentren dropdown
             const vzSelect = document.getElementById('fahrzeug-verteilungszentrum');
@@ -964,7 +1007,7 @@
 
             // Fahrer-Tour dropdown
             const fahrerTourSelect = document.getElementById('tour-fahrer-tour-select');
-            fahrerTourSelect.innerHTML = tours.map(t => `<option value="${t.tour_id}">${t.tour_standart} - ${t.tour_zeit}</option>`).join('');
+            fahrerTourSelect.innerHTML = tours.map(t => `<option value="${t.tour_id}">${formatTime(t.tour_zeit)}</option>`).join('');
 
             // Datum für Fahrer-Tour
             const today = new Date().toISOString().split('T')[0];
@@ -1287,7 +1330,7 @@
                     <tr>
                         <td>${t.tour_id}</td>
                         <td>${t.tour_standart}</td>
-                        <td>${t.tour_zeit}</td>
+                        <td>${formatTime(t.tour_zeit)}</td>
                         <td>
                             <button class="btn btn-sm btn-outline-primary" onclick="editTour(${t.tour_id})">
                                 <i class="bi bi-pencil"></i>
@@ -1491,7 +1534,7 @@
                             <input type="number" class="form-control" id="edit-${name}-id" value="${data.sendung_id}">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Größe</label>
+                            <label class="form-label">Paketgröße</label>
                             <input type="number" step="0.1" class="form-control" id="edit-${name}-grosse" value="${data.groesse}">
                         </div>
                         <div class="col-md-3">
@@ -1508,7 +1551,9 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label">Tour ID</label>
-                            <input type="number" class="form-control" id="edit-${name}-tour" value="${data.tour_id}">
+                            <select class="form-select" id="edit-${name}-tour">
+                                <option value="0" ${!data.tour_id || data.tour_id == 0 ? 'selected' : ''}>-- Keine Tour --</option>
+                            </select>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Anmerkung</label>
@@ -1846,8 +1891,8 @@
             tbody.innerHTML = sendungen.map(s => `
                 <tr>
                     <td>${s.sendung_id}</td>
-                    <td>${s.groesse}</td>
-                    <td>${s.gewicht}</td>
+                    <td>${getSizeCategory(s.groesse)}</td>
+                    <td>${s.gewicht} kg</td>
                     <td>${s.anmerkung || '-'}</td>
                 </tr>
             `).join('');
@@ -1877,7 +1922,7 @@
                             <td>${s.sendung_id}</td>
                             <td>${s.kunde_id}</td>
                             <td>${s.tour_id}</td>
-                            <td>${s.groesse} m²</td>
+                            <td>${getSizeCategory(s.groesse)}</td>
                             <td>${s.gewicht} kg</td>
                             <td>${s.anmerkung || '-'}</td>
                             <td>${s.adresse_liefer}</td>
@@ -1905,7 +1950,7 @@
                 if (tourSelect) {
                     const tourResponse = await fetch(`${API_URL}/tour/`);
                     const tours = await tourResponse.json();
-                    tourSelect.innerHTML = tours.map(t => `<option value="${t.tour_id}">${t.tour_standart} - ${t.tour_zeit}</option>`).join('');
+                    tourSelect.innerHTML = '<option value="0">-- Keine Tour --</option>' + tours.map(t => `<option value="${t.tour_id}">${formatTime(t.tour_zeit)}</option>`).join('');
                 }
 
                 // Kunden für Sendung

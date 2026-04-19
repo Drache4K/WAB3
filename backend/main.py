@@ -404,6 +404,9 @@ def get_Sendung_Verteilungszenter(id):
 
 @app.post("/sendung/")
 def create_sendung(sendung: Sendung):
+    # tour_id 0 bedeutet keine Tour -> NULL
+    tour_id = sendung.tour_id if sendung.tour_id != 0 else None
+    
     cur.execute(
         """--sql
         START TRANSACTION;
@@ -414,18 +417,21 @@ def create_sendung(sendung: Sendung):
         INSERT INTO versand_dienstleister.sendungsverfolgung
         (sendung_id, datum, versendet)
         VALUES (%s, CURRENT_DATE, False);
-        COMMIT;""", (sendung.sendung_id, sendung.groesse, sendung.gewicht, sendung.anmerkung, sendung.adresse_liefer, sendung.tour_id, sendung.kunde_id, sendung.sendung_id)
+        COMMIT;""", (sendung.sendung_id, sendung.groesse, sendung.gewicht, sendung.anmerkung, sendung.adresse_liefer, tour_id, sendung.kunde_id, sendung.sendung_id)
     )
     conn.commit()
     return {"status": "success", "message": "Sendung created"}
 
 @app.put("/sendung/{id}")
 def update_sendung(id: int, sendung: Sendung):
+    # tour_id 0 bedeutet keine Tour -> NULL
+    tour_id = sendung.tour_id if sendung.tour_id != 0 else None
+    
     cur.execute(
         """UPDATE versand_dienstleister.sendung 
             SET groesse = %s, gewicht = %s, anmerkung = %s, adresse_liefer = %s, tour_id = %s, kunde_id = %s 
         WHERE sendung_id = %s;
-        """, (sendung.groesse, sendung.gewicht, sendung.anmerkung, sendung.adresse_liefer, sendung.tour_id, sendung.kunde_id, id)
+        """, (sendung.groesse, sendung.gewicht, sendung.anmerkung, sendung.adresse_liefer, tour_id, sendung.kunde_id, id)
     )
     conn.commit()
     return {"status": "success", "message": "Sendung updated"}
