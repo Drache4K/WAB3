@@ -7,6 +7,7 @@ import os
 from fastapi import FastAPI
 import uvicorn
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
 dotenv.load_dotenv(dotenv.find_dotenv())
 
@@ -20,6 +21,15 @@ conn = psycopg2.connect(
 )
 
 app = FastAPI()
+
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 ## Models
 
