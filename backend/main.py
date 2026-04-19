@@ -27,8 +27,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"]
 )
 
 ## Models
@@ -68,7 +67,7 @@ class Verteilungszentrum(BaseModel):
 
 class Tour(BaseModel):
     tour_id: int
-    tour_stopps: int
+    tour_standart: str
     tour_zeit: str
 
 class Sendungsverfolgung(BaseModel):
@@ -128,7 +127,7 @@ def hard_reset():
 
         CREAT table versand_dienstleister.tour (
             tour_id int primary key,
-            tour_stopps int,
+            tour_route varchar(1000),
             tour_zeit time
         );
 
@@ -226,15 +225,15 @@ def hard_reset():
         (10,'CityMarket','069333222','info@citymarket.de','Hauptwache 1, Frankfurt','Hauptwache 1, Frankfurt');
 
         -- Touren
-        INSERT INTO versand_dienstleister.tour (tour_id, tour_stopps, tour_zeit) VALUES
-        (1,5,'08:00:00'),
-        (2,3,'09:30:00'),
-        (3,7,'10:45:00'),
-        (4,4,'12:00:00'),
-        (5,6,'13:30:00'),
-        (6,8,'15:00:00'),
-        (7,2,'16:30:00'),
-        (8,5,'18:00:00');
+        INSERT INTO versand_dienstleister.tour (tour_id, tour_route, tour_zeit) VALUES
+        (1,'Berlin -> Potsdam -> Brandenburg','08:00:00'),
+        (2,'Hamburg -> Lübeck -> Kiel','09:30:00'),
+        (3,'München -> Augsburg -> Ingolstadt -> Regensburg','10:45:00'),
+        (4,'Köln -> Bonn -> Düsseldorf','12:00:00'),
+        (5,'Frankfurt -> Mainz -> Wiesbaden -> Darmstadt','13:30:00'),
+        (6,'Stuttgart -> Ulm -> Friedrichshafen -> Konstanz','15:00:00'),
+        (7,'Leipzig -> Dresden','16:30:00'),
+        (8,'Nürnberg -> Bayreuth -> Bamberg -> Erlangen','18:00:00');
 
         -- Sendungen (viele Testdaten)
         INSERT INTO versand_dienstleister.sendung (sendung_id, groesse, gewicht, anmerkung, adresse_liefer, tour_id, kunde_id) VALUES
@@ -323,7 +322,7 @@ def get_alle_Kunden():
 @app.get("/kunde/{id}")
 def get_Kunde_id(id: int):
     cur.execute(
-        "SELECT * FROM versand_dienstleister.kunde WHERE kunde_id = %s;", str(id)
+        "SELECT * FROM versand_dienstleister.kunde WHERE kunde_id = %s;", (id,)
     )
     return to_json_liste(cur.fetchall(), cur.description)
 
@@ -335,7 +334,8 @@ def create_kunde(kunde: Kunde):
         VALUES (%s,%s,%s,%s,%s,%s);
         """, (kunde.kunde_id, kunde.name, kunde.telefonnummer, kunde.mailadresse, kunde.adresse_rechung, kunde.adresse_liefer)
     )
-    return to_json_liste(cur.fetchall(), cur.description)
+    conn.commit()
+    return {"status": "success", "message": "Kunde created"}
 
 @app.get("/kunde/{id}/sendungen/")
 def get_Sendungen_von_Kunde(id: int):
@@ -343,7 +343,7 @@ def get_Sendungen_von_Kunde(id: int):
         """SELECT s.sendung_id, s.groesse, s.gewicht, s.anmerkung
         FROM versand_dienstleister.sendung s
         WHERE s.kunde_id = %s;
-    """, str(id))
+    """, (id,))
     return to_json_liste(cur.fetchall(), cur.description)
 
 @app.put("/kunde/{id}")
@@ -354,15 +354,17 @@ def update_kunde(id: int, kunde: Kunde):
         WHERE kunde_id = %s;
         """, (kunde.name, kunde.telefonnummer, kunde.mailadresse, kunde.adresse_rechung, kunde.adresse_liefer, id)
     )
-    return to_json_liste(cur.fetchall(), cur.description)
+    conn.commit()
+    return {"status": "success", "message": "Kunde updated"}
 
 @app.delete("/kunde/{id}")
 def delete_kunde(id: int):
     cur.execute(
         """DELETE FROM versand_dienstleister.kunde WHERE kunde_id = %s;
-        """, (id)
+        """, (id,)
     )
-    return to_json_liste(cur.fetchall(), cur.description)
+    conn.commit()
+    return {"status": "success", "message": "Kunde deleted"}
 
 # Sendung ------------------------------------------
 @app.get("/sendung/")
@@ -375,7 +377,7 @@ def get_alle_Sendungen():
 @app.get("/sendung/{id}")
 def get_Sendung_id(id):
     cur.execute(
-        "SELECT * FROM versand_dienstleister.sendung WHERE sendung_id = %s;", str(id)
+        "SELECT * FROM versand_dienstleister.sendung WHERE sendung_id = %s;", (id,)
     )
     return to_json_liste(cur.fetchall(), cur.description)
 
@@ -396,7 +398,7 @@ def get_Sendung_Verteilungszenter(id):
         INNER JOIN versand_dienstleister.verteilungszentrum v
         ON sendung.sendung_id = v.sendung_id
         WHERE sendung_id = %s;
-        """, str(id)
+        """, (id,)
     )
     return to_json_liste(cur.fetchall(), cur.description)
 
@@ -414,7 +416,8 @@ def create_sendung(sendung: Sendung):
         VALUES (%s, CURRENT_DATE, False);
         COMMIT;""", (sendung.sendung_id, sendung.groesse, sendung.gewicht, sendung.anmerkung, sendung.adresse_liefer, sendung.tour_id, sendung.kunde_id, sendung.sendung_id)
     )
-    return to_json_liste(cur.fetchall(), cur.description)
+    conn.commit()
+    return {"status": "success", "message": "Sendung created"}
 
 @app.put("/sendung/{id}")
 def update_sendung(id: int, sendung: Sendung):
@@ -424,15 +427,17 @@ def update_sendung(id: int, sendung: Sendung):
         WHERE sendung_id = %s;
         """, (sendung.groesse, sendung.gewicht, sendung.anmerkung, sendung.adresse_liefer, sendung.tour_id, sendung.kunde_id, id)
     )
-    return to_json_liste(cur.fetchall(), cur.description)
+    conn.commit()
+    return {"status": "success", "message": "Sendung updated"}
 
 @app.delete("/sendung/{id}")
 def delete_sendung(id: int):
     cur.execute(
         """DELETE FROM versand_dienstleister.sendung WHERE sendung_id = %s;
-        """, (id)
+        """, (id,)
     )
-    return to_json_liste(cur.fetchall(), cur.description)
+    conn.commit()
+    return {"status": "success", "message": "Sendung deleted"}
 
 # Fahrer ------------------------------------------
 @app.get("/fahrer/")
@@ -442,7 +447,7 @@ def get_alle_Fahrer():
 
 @app.get("/fahrer/{id}")
 def get_Fahrer_id(id):
-    cur.execute("SELECT * FROM versand_dienstleister.fahrer WHERE fahrer_id = %s;", str(id))
+    cur.execute("SELECT * FROM versand_dienstleister.fahrer WHERE fahrer_id = %s;", (id,))
     return to_json_liste(cur.fetchall(), cur.description)
 
 @app.get("/fahrer/{id}/tour/") # TODO: hier noch die Fahrzeug Kenzeichen
@@ -454,7 +459,7 @@ def get_Fahrer_Tour(id: int):
             ON ft.fahrer_id = f.fahrer_id
             INNER JOIN versand_dienstleister.tour t
             ON t.tour_id = ft.tour_id
-            WHERE ft.fahrer_id = %s;""", str(id))
+            WHERE ft.fahrer_id = %s;""", (id,))
     return to_json_liste(cur.fetchall(), cur.description)
 
 @app.post("/fahrer/")
@@ -462,10 +467,11 @@ def create_fahrer(fahrer: Fahrer):
     cur.execute(
         """INSERT INTO versand_dienstleister.fahrer
         (fahrer_id, fuehrerschein, name)
-        VALUES (%s,%s,%s);
+        VALUES (%s, %s, %s);
         """, (fahrer.fahrer_id, fahrer.fuehrerschein, fahrer.name)
     )
-    return to_json_liste(cur.fetchall(), cur.description)
+    conn.commit()
+    return {"status": "success", "message": "Fahrer created"}
 
 @app.put("/fahrer/{id}")
 def update_fahrer(id: int, fahrer: Fahrer):
@@ -475,15 +481,17 @@ def update_fahrer(id: int, fahrer: Fahrer):
         WHERE fahrer_id = %s;
         """, (fahrer.fuehrerschein, fahrer.name, id)
         )
-    return to_json_liste(cur.fetchall(), cur.description)
+    conn.commit()
+    return {"status": "success", "message": "Fahrer updated"}
 
 @app.delete("/fahrer/{id}")
 def delete_fahrer(id: int):
     cur.execute(
         """DELETE FROM versand_dienstleister.fahrer WHERE fahrer_id = %s;
-        """, (id)
+        """, (id,)
     )
-    return to_json_liste(cur.fetchall(), cur.description)
+    conn.commit()
+    return {"status": "success", "message": "Fahrer deleted"}
 
 
 # Fahrzeuge ------------------------------------------
@@ -500,7 +508,7 @@ def get_alle_Fahrzeuge():
 
 @app.get("/fahrzeug/{id}")
 def get_Fahrzeug_id(id):
-    cur.execute("SELECT * FROM versand_dienstleister.fahrzeug WHERE fahrzeug_id = %s;", str(id))
+    cur.execute("SELECT * FROM versand_dienstleister.fahrzeug WHERE fahrzeug_id = %s;", (id,))
     return to_json_liste(cur.fetchall(), cur.description)
 
 @app.get("/fahrzeug/defekt/")
@@ -523,7 +531,8 @@ def create_fahrzeug(fahrzeug: Fahrzeug):
         VALUES (%s,%s,%s,%s);
         """, (fahrzeug.fahrzeug_id, fahrzeug.defekt, fahrzeug.kennzeichen, fahrzeug.verteilungszentrum_id)
     )
-    return to_json_liste(cur.fetchall(), cur.description)
+    conn.commit()
+    return {"status": "success", "message": "Fahrzeug created"}
 
 @app.put("/fahrzeug/{id}")
 def update_fahrzeug(id: int, fahrzeug: Fahrzeug):
@@ -533,15 +542,17 @@ def update_fahrzeug(id: int, fahrzeug: Fahrzeug):
         WHERE fahrzeug_id = %s;
         """, (fahrzeug.defekt, fahrzeug.kennzeichen, fahrzeug.verteilungszentrum_id, id)
     )
-    return to_json_liste(cur.fetchall(), cur.description)
+    conn.commit()
+    return {"status": "success", "message": "Fahrzeug updated"}
 
 @app.delete("/fahrzeug/{id}")
 def delete_fahrzeug(id: int):
     cur.execute(
         """DELETE FROM versand_dienstleister.fahrzeug WHERE fahrzeug_id = %s;
-        """, (id)
+        """, (id,)
     )
-    return to_json_liste(cur.fetchall(), cur.description)
+    conn.commit()
+    return {"status": "success", "message": "Fahrzeug deleted"}
 
 # Touren ------------------------------------------
 @app.get("/tour/")
@@ -554,7 +565,7 @@ def get_alle_Touren():
 
 @app.get("/tour/{id}")
 def get_Tour_id(id):
-    cur.execute("SELECT * FROM versand_dienstleister.tour WHERE tour_id = %s;", str(id))
+    cur.execute("SELECT * FROM versand_dienstleister.tour WHERE tour_id = %s;", (id,))
     return to_json_liste(cur.fetchall(), cur.description)
 
 @app.get("/tour/{id}/fahrer") # TODO: Fahrzeug Kenzeichen
@@ -566,36 +577,39 @@ def get_Tour_Fahrer(id: int):
             ON ft.tour_id = t.tour_id
             INNER JOIN versand_dienstleister.fahrer f
             ON f.fahrer_id = ft.fahrer_id
-            WHERE ft.tour_id = %s;""", str(id))
+            WHERE ft.tour_id = %s;""", (id,))
     return to_json_liste(cur.fetchall(), cur.description)
 
 @app.post("/tour/")
 def create_tour(tour: Tour):
     cur.execute(
         """INSERT INTO versand_dienstleister.tour 
-            (tour_id, tour_stopps, tour_zeit) 
+            (tour_id, tour_standart, tour_zeit) 
         VALUES (%s,%s,%s);
-        """, (tour.tour_id, tour.tour_stopps, tour.tour_zeit)
+        """, (tour.tour_id, tour.tour_standart, tour.tour_zeit)
     )
-    return to_json_liste(cur.fetchall(), cur.description)
+    conn.commit()
+    return {"status": "success", "message": "Tour created"}
 
 @app.put("/tour/{id}")
 def update_tour(id: int, tour: Tour):
     cur.execute(
         """UPDATE versand_dienstleister.tour 
-            SET tour_stopps = %s, tour_zeit = %s 
+            SET tour_standart = %s, tour_zeit = %s 
         WHERE tour_id = %s;
-        """, (tour.tour_stopps, tour.tour_zeit, id)
+        """, (tour.tour_standart, tour.tour_zeit, id)
     )
-    return to_json_liste(cur.fetchall(), cur.description)
+    conn.commit()
+    return {"status": "success", "message": "Tour updated"}
 
 @app.delete("/tour/{id}")
 def delete_tour(id: int):
     cur.execute(
         """DELETE FROM versand_dienstleister.tour WHERE tour_id = %s;
-        """, (id)
+        """, (id,)
     )
-    return to_json_liste(cur.fetchall(), cur.description)
+    conn.commit()
+    return {"status": "success", "message": "Tour deleted"}
 
 # Verteilungszentrum ---------------------
 @app.get("/verteilungszentrum/")
@@ -608,8 +622,19 @@ def get_alle_Verteilungszetrum(id: int):
     cur.execute(
         """SELECT * 
         FROM versand_dienstleister.verteilungszentrum 
-        WHERE verteilungszentrum_id = %s;""", str(id))
+        WHERE verteilungszentrum_id = %s;""", (id,))
     return to_json_liste(cur.fetchall(), cur.description)
+
+@app.post("/verteilungszentrum/")
+def create_verteilungszentrum(verteilungszentrum: Verteilungszentrum):
+    cur.execute(
+        """INSERT INTO versand_dienstleister.verteilungszentrum
+            (verteilungszentrum_id, adresse, telefonnummer)
+        VALUES (%s,%s,%s);
+        """, (verteilungszentrum.verteilungszentrum_id, verteilungszentrum.adresse, verteilungszentrum.telefonnummer)
+    )
+    conn.commit()
+    return {"status": "success", "message": "Verteilungszentrum created"}
 
 @app.put("/verteilungszentrum/{id}")
 def update_verteilungszentrum(id: int, vzeitelungszentrum: Verteilungszentrum):
@@ -619,15 +644,17 @@ def update_verteilungszentrum(id: int, vzeitelungszentrum: Verteilungszentrum):
         WHERE verteilungszentrum_id = %s;
         """, (vzeitelungszentrum.adresse, vzeitelungszentrum.telefonnummer, id)
     )
-    return to_json_liste(cur.fetchall(), cur.description)
+    conn.commit()
+    return {"status": "success", "message": "Verteilungszentrum updated"}
 
 @app.delete("/verteilungszentrum/{id}")
 def delete_verteilungszentrum(id: int):
     cur.execute(
         """DELETE FROM versand_dienstleister.verteilungszentrum WHERE verteilungszentrum_id = %s;
-        """, (id)
+        """, (id,)
     )
-    return to_json_liste(cur.fetchall(), cur.description)
+    conn.commit()
+    return {"status": "success", "message": "Verteilungszentrum deleted"}
 # Addons -------
 
 # Aggregation Queries
@@ -774,4 +801,5 @@ def tests():
 #    tests()
 
 if __name__ == "__main__":
+    print_json(create_fahrer(Fahrer(fahrer_id=11, fuehrerschein="B9", name="Tomas")))
     uvicorn.run("app:app", port=7000, reload=True)

@@ -20,9 +20,9 @@ class Verteilungszentrum:
         return json.dumps(__dict__)
 
 class Tour:
-    def __init__(self, tour_id, tour_stopps, tour_zeit):
+    def __init__(self, tour_id, tour_route, tour_zeit):
         self.tour_id = tour_id
-        self.tour_stopps = tour_stopps
+        self.tour_route = tour_route
         self.tour_zeit = tour_zeit
     def to_json(self):
         return json.dumps(__dict__)

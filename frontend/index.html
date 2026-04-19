@@ -321,6 +321,49 @@
                     <h2 class="section-title">Kundenverwaltung</h2>
                 </div>
 
+                <!-- Kunde hinzufügen -->
+                <div class="col-12 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <span><i class="bi bi-person-plus me-2"></i>Kunde hinzufügen</span>
+                        </div>
+                        <div class="card-body">
+                            <form id="kunde-form" onsubmit="handleKundeSubmit(event)">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Kunde ID</label>
+                                        <input type="number" class="form-control" id="kunde-id" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Name</label>
+                                        <input type="text" class="form-control" id="kunde-name" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Telefonnummer</label>
+                                        <input type="text" class="form-control" id="kunde-telefon" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">E-Mail</label>
+                                        <input type="email" class="form-control" id="kunde-email" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Rücksendeadresse</label>
+                                        <textarea class="form-control" id="kunde-adresse-rechnung" rows="2" required></textarea>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Lieferadresse</label>
+                                        <textarea class="form-control" id="kunde-adresse-liefer" rows="2" required></textarea>
+                                    </div>
+                                    <div class="col-12 d-flex justify-content-end gap-2">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="resetKundeForm()">Zurücksetzen</button>
+                                        <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Kunde hinzufügen</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Kunden-Karten -->
                 <div class="col-12 mb-4 kachel-grid" id="kunden-grid">
                     <!-- Wird dynamisch gefüllt -->
@@ -479,9 +522,8 @@
                 <!-- Fahrer Liste -->
                 <div class="col-12">
                     <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
+                        <div class="card-header">
                             <span><i class="bi bi-person-vcard me-2"></i>Alle Fahrer</span>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteFahrer()"><i class="bi bi-trash me-1"></i>löschen</button>
                         </div>
                         <div class="card-body">
                             <table class="table table-hover table-sm">
@@ -549,9 +591,8 @@
                 <!-- Fahrzeuge Liste -->
                 <div class="col-12">
                     <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
+                        <div class="card-header">
                             <span><i class="bi bi-truck-train me-2"></i>Alle Fahrzeuge</span>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteFahrzeug()"><i class="bi bi-trash me-1"></i>löschen</button>
                         </div>
                         <div class="card-body">
                             <table class="table table-hover table-sm">
@@ -604,9 +645,9 @@
                                         <label class="form-label">Tour ID</label>
                                         <input type="number" class="form-control" id="tour-id" required>
                                     </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Anzahl Stopps</label>
-                                        <input type="number" class="form-control" id="tour-stopps" required>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Route</label>
+                                        <input type="text" class="form-control" id="tour-standart" placeholder="z.B. Berlin -> Hamburg -> Bremen" required>
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label">Tour Zeit</label>
@@ -625,16 +666,15 @@
                 <!-- Touren Liste -->
                 <div class="col-12">
                     <div class="card">
-                        <div class="card-header d-flex justify-content-between align-items-center">
+                        <div class="card-header">
                             <span><i class="bi bi-list-ol me-2"></i>Alle Touren</span>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTour()"><i class="bi bi-trash me-1"></i>löschen</button>
                         </div>
                         <div class="card-body">
                             <table class="table table-hover table-sm">
                                 <thead>
                                     <tr>
                                         <th>ID</th>
-                                        <th>Stopps</th>
+                                        <th>Route</th>
                                         <th>Zeit</th>
                                         <th>Aktionen</th>
                                     </tr>
@@ -773,6 +813,26 @@
         let currentEditType = null;
         let currentEditData = null;
 
+        // Sortierfunktion
+        function sortData(data, field, ascending = true) {
+            return data.sort((a, b) => {
+                let aVal = a[field];
+                let bVal = b[field];
+                
+                // Wenn es Strings sind, vergleiche case-insensitiv
+                if (typeof aVal === 'string') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                }
+                
+                if (ascending) {
+                    return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+                } else {
+                    return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+                }
+            });
+        }
+
         // Dashboard Statistics
         async function loadDashboard() {
             try {
@@ -799,36 +859,33 @@
 
         // Kunden Grid
         async function loadKundenGrid() {
-            const response = await fetch(`${API_URL}/kunde/`);
-            const kunden = await response.json();
+            try {
+                const response = await fetch(`${API_URL}/kunde/`);
+                if (!response.ok) throw new Error(`Error loading kunden: ${response.status}`);
+                let kunden = await response.json();
+                kunden = sortData(kunden, 'kunde_id', true); // Sortiere nach ID aufsteigend
 
-            const container = document.getElementById('kunden-grid');
-            container.innerHTML = kunden.map(k => `
-                <div class="kachel" onclick="viewKunde(${k.kunde_id})">
-                    <i class="bi bi-person-badge kachel-icon"></i>
-                    <h6>${k.name}</h6>
-                    <p class="text-muted small mb-0">${k.kunde_id}</p>
-                </div>
-            `).join('');
-
-            // Load sendungen for each kunde
-            for (const k of kunden) {
-                const sendungsResponse = await fetch(`${API_URL}/kunde/${k.kunde_id}/sendungen/`);
-                const sendungs = await sendungsResponse.json();
-
-                const sendungList = document.getElementById('sendungen-list');
-                const tbody = document.getElementById('sendungen-tbody');
-
-                if (sendungs.length > 0) {
-                    sendungList.style.display = 'block';
-                    tbody.innerHTML = sendungs.map(s => `
-                        <tr>
-                            <td>${s.sendung_id}</td>
-                            <td>${s.groesse}</td>
-                            <td>${s.gewicht}</td>
-                            <td>${s.anmerkung || '-'}</td>
-                        </tr>
-                    `).join('');
+                const container = document.getElementById('kunden-grid');
+                container.innerHTML = kunden.map(k => `
+                    <div class="kachel">
+                        <i class="bi bi-person-badge kachel-icon"></i>
+                        <h6>${k.name}</h6>
+                        <p class="text-muted small mb-0">${k.kunde_id}</p>
+                        <div class="d-flex gap-2 mt-2">
+                            <button class="btn btn-sm btn-outline-primary flex-grow-1" onclick="editKunde(${k.kunde_id})">
+                                <i class="bi bi-pencil"></i> Bearbeiten
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteKunde(${k.kunde_id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading kunden:', error);
+                const container = document.getElementById('kunden-grid');
+                if (container) {
+                    container.innerHTML = '<p class="text-danger">Fehler beim Laden der Kunden</p>';
                 }
             }
         }
@@ -839,34 +896,44 @@
 
         // Sendungen
         async function loadSendungen() {
-            const response = await fetch(`${API_URL}/sendung/`);
-            const sendungen = await response.json();
+            try {
+                const response = await fetch(`${API_URL}/sendung/`);
+                if (!response.ok) throw new Error(`Error loading sendungen: ${response.status}`);
+                let sendungen = await response.json();
+                sendungen = sortData(sendungen, 'sendung_id', true); // Sortiere nach ID aufsteigend
 
-            const tbody = document.getElementById('sendungen-tbody-full');
-            if (sendungen.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center">Keine Sendungen</td></tr>';
-                return;
+                const tbody = document.getElementById('sendungen-tbody-full');
+                if (sendungen.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center">Keine Sendungen</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = sendungen.map(s => `
+                    <tr>
+                        <td>${s.sendung_id}</td>
+                        <td>${s.kunde_id}</td>
+                        <td>${s.tour_id}</td>
+                        <td>${s.groesse} m²</td>
+                        <td>${s.gewicht} kg</td>
+                        <td>${s.anmerkung || '-'}</td>
+                        <td>${s.adresse_liefer}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editSendung(${s.sendung_id}, ${s.kunde_id}, ${s.tour_id})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSendung(${s.sendung_id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading sendungen:', error);
+                const tbody = document.getElementById('sendungen-tbody-full');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Fehler beim Laden der Sendungen</td></tr>';
+                }
             }
-
-            tbody.innerHTML = sendungen.map(s => `
-                <tr>
-                    <td>${s.sendung_id}</td>
-                    <td>${s.kunde_id}</td>
-                    <td>${s.tour_id}</td>
-                    <td>${s.groesse} m²</td>
-                    <td>${s.gewicht} kg</td>
-                    <td>${s.anmerkung || '-'}</td>
-                    <td>${s.adresse_liefer}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editSendung(${s.sendung_id}, ${s.kunde_id}, ${s.tour_id})">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteSendung(${s.sendung_id})">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
         }
 
         // Load dropdowns
@@ -881,7 +948,7 @@
             const tourSelect = document.getElementById('sendung-tour');
             const tourResponse = await fetch(`${API_URL}/tour/`);
             const tours = await tourResponse.json();
-            tourSelect.innerHTML = tours.map(t => `<option value="${t.tour_id}">${t.tour_stopps} Stopps - ${t.tour_zeit} Uhr</option>`).join('');
+            tourSelect.innerHTML = tours.map(t => `<option value="${t.tour_id}">${t.tour_standart} - ${t.tour_zeit}</option>`).join('');
 
             // Verteilungszentren dropdown
             const vzSelect = document.getElementById('fahrzeug-verteilungszentrum');
@@ -897,7 +964,7 @@
 
             // Fahrer-Tour dropdown
             const fahrerTourSelect = document.getElementById('tour-fahrer-tour-select');
-            fahrerTourSelect.innerHTML = tours.map(t => `<option value="${t.tour_id}">${t.tour_stopps} Stopps - ${t.tour_zeit} Uhr</option>`).join('');
+            fahrerTourSelect.innerHTML = tours.map(t => `<option value="${t.tour_id}">${t.tour_standart} - ${t.tour_zeit}</option>`).join('');
 
             // Datum für Fahrer-Tour
             const today = new Date().toISOString().split('T')[0];
@@ -918,19 +985,76 @@
                 anmerkung: document.getElementById('sendung-anmerkung').value
             };
 
-            await fetch(`${API_URL}/sendung/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-
-            alert('Sendung erstellt!');
-            event.target.reset();
-            loadSendungen();
+            try {
+                const response = await fetch(`${API_URL}/sendung/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${error}`);
+                }
+                
+                alert('Sendung erstellt!');
+                event.target.reset();
+                await Promise.allSettled([
+                    loadDashboard().catch(e => console.error('Dashboard error:', e)),
+                    loadSendungen().catch(e => console.error('Sendungen error:', e)),
+                    filterSendungen('all').catch(e => console.error('Filter error:', e))
+                ]);
+            } catch (error) {
+                console.error('Error creating sendung:', error);
+                alert('Fehler beim Erstellen der Sendung: ' + error.message);
+            }
         }
 
         function resetSendungForm() {
             document.getElementById('sendung-form').reset();
+        }
+
+        // Kunde Submit
+        async function handleKundeSubmit(event) {
+            event.preventDefault();
+
+            const data = {
+                kunde_id: parseInt(document.getElementById('kunde-id').value),
+                name: document.getElementById('kunde-name').value,
+                telefonnummer: document.getElementById('kunde-telefon').value,
+                mailadresse: document.getElementById('kunde-email').value,
+                adresse_rechung: document.getElementById('kunde-adresse-rechnung').value,
+                adresse_liefer: document.getElementById('kunde-adresse-liefer').value
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/kunde/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${error}`);
+                }
+                
+                alert('Kunde hinzugefügt!');
+                event.target.reset();
+                await Promise.allSettled([
+                    loadDashboard().catch(e => console.error('Dashboard error:', e)),
+                    loadKundenGrid().catch(e => console.error('Kunden error:', e)),
+                    loadDropdowns().catch(e => console.error('Dropdowns error:', e)),
+                    loadSendungen().catch(e => console.error('Sendungen error:', e))
+                ]);
+            } catch (error) {
+                console.error('Error creating kunde:', error);
+                alert('Fehler beim Hinzufügen des Kunden: ' + error.message);
+            }
+        }
+
+        function resetKundeForm() {
+            document.getElementById('kunde-form').reset();
         }
 
         // Fahrer Submit
@@ -943,44 +1067,67 @@
                 fuehrerschein: document.getElementById('fahrer-fuehrerschein').value
             };
 
-            await fetch(`${API_URL}/fahrer/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-
-            alert('Fahrer hinzugefügt!');
-            event.target.reset();
-            loadFahrer();
+            try {
+                const response = await fetch(`${API_URL}/fahrer/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${error}`);
+                }
+                
+                alert('Fahrer hinzugefügt!');
+                event.target.reset();
+                await Promise.allSettled([
+                    loadDashboard().catch(e => console.error('Dashboard error:', e)),
+                    loadFahrer().catch(e => console.error('Fahrer error:', e)),
+                    loadDropdowns().catch(e => console.error('Dropdowns error:', e))
+                ]);
+            } catch (error) {
+                console.error('Error creating fahrer:', error);
+                alert('Fehler beim Hinzufügen des Fahrers: ' + error.message);
+            }
         }
 
         // Fahrerauftrag
         async function loadFahrer() {
-            const response = await fetch(`${API_URL}/fahrer/`);
-            if (!response.ok) throw new Error('Error loading drivers');
-            const fahrer = await response.json();
+            try {
+                const response = await fetch(`${API_URL}/fahrer/`);
+                if (!response.ok) throw new Error(`Error loading drivers: ${response.status}`);
+                let fahrer = await response.json();
+                fahrer = sortData(fahrer, 'fahrer_id', true); // Sortiere nach ID aufsteigend
 
-            const tbody = document.getElementById('fahrer-tbody');
-            if (fahrer.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center">Keine Fahrer</td></tr>';
-                return;
+                const tbody = document.getElementById('fahrer-tbody');
+                if (fahrer.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center">Keine Fahrer</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = fahrer.map(f => `
+                    <tr>
+                        <td>${f.fahrer_id}</td>
+                        <td>${f.name}</td>
+                        <td>${f.fuehrerschein}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editFahrer(${f.fahrer_id})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteFahrer(${f.fahrer_id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading fahrer:', error);
+                const tbody = document.getElementById('fahrer-tbody');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Fehler beim Laden der Fahrer</td></tr>';
+                }
             }
-
-            tbody.innerHTML = fahrer.map(f => `
-                <tr>
-                    <td>${f.fahrer_id}</td>
-                    <td>${f.name}</td>
-                    <td>${f.fuehrerschein}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editFahrer(${f.fahrer_id})">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteFahrer(${f.fahrer_id})">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
         }
 
         function resetFahrerForm() {
@@ -998,63 +1145,87 @@
                 verteilungszentrum_id: parseInt(document.getElementById('fahrzeug-verteilungszentrum').value)
             };
 
-            await fetch(`${API_URL}/fahrzeug/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-
-            alert('Fahrzeug hinzugefügt!');
-            event.target.reset();
-            loadFahrzeuge();
+            try {
+                const response = await fetch(`${API_URL}/fahrzeug/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${error}`);
+                }
+                
+                alert('Fahrzeug hinzugefügt!');
+                event.target.reset();
+                await Promise.allSettled([
+                    loadDashboard().catch(e => console.error('Dashboard error:', e)),
+                    loadFahrzeuge().catch(e => console.error('Fahrzeuge error:', e)),
+                    loadDropdowns().catch(e => console.error('Dropdowns error:', e))
+                ]);
+            } catch (error) {
+                console.error('Error creating fahrzeug:', error);
+                alert('Fehler beim Hinzufügen des Fahrzeugs: ' + error.message);
+            }
         }
 
         // Fahrzeugauftrag
         async function loadFahrzeuge() {
-            const response = await fetch(`${API_URL}/fahrzeug/`);
-            const fahrzeuge = await response.json();
+            try {
+                const response = await fetch(`${API_URL}/fahrzeug/`);
+                if (!response.ok) throw new Error(`Error loading fahrzeuge: ${response.status}`);
+                let fahrzeuge = await response.json();
+                fahrzeuge = sortData(fahrzeuge, 'fahrzeug_id', true); // Sortiere nach ID aufsteigend
 
-            const tbody = document.getElementById('fahrzeug-tbody');
-            if (fahrzeuge.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center">Keine Fahrzeuge</td></tr>';
-                return;
-            }
+                const tbody = document.getElementById('fahrzeug-tbody');
+                if (fahrzeuge.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Keine Fahrzeuge</td></tr>';
+                    return;
+                }
 
-            tbody.innerHTML = fahrzeuge.map(f => `
-                <tr>
-                    <td>${f.fahrzeug_id}</td>
-                    <td class="${f.defekt ? 'text-danger' : 'text-success'}">
-                        <i class="bi bi-${f.defekt ? 'exclamation-circle' : 'check-circle'}"></i>
-                        ${f.defekt ? 'Defekt' : 'Betriebsbereit'}
-                    </td>
-                    <td>${f.kennzeichen}</td>
-                    <td>${f.adresse}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editFahrzeug(${f.fahrzeug_id})">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteFahrzeug(${f.fahrzeug_id})">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-
-            // Load defekte
-            const defektResponse = await fetch(`${API_URL}/fahrzeug/defekt/`);
-            const defekte = await defektResponse.json();
-
-            const container = document.getElementById('defekt-fahrzeuge-container');
-            if (defekte.length === 0) {
-                container.innerHTML = '<p class="text-muted">Keine defekten Fahrzeuge</p>';
-            } else {
-                container.innerHTML = defekte.map(f => `
-                    <div class="alert alert-warning mb-2">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        <strong>${f.kennzeichen}</strong> (${f.fahrzeug_id}) ist defekt<br>
-                        Standort: ${f.adresse}
-                    </div>
+                tbody.innerHTML = fahrzeuge.map(f => `
+                    <tr>
+                        <td>${f.fahrzeug_id}</td>
+                        <td class="${f.defekt ? 'text-danger' : 'text-success'}">
+                            <i class="bi bi-${f.defekt ? 'exclamation-circle' : 'check-circle'}"></i>
+                            ${f.defekt ? 'Defekt' : 'Betriebsbereit'}
+                        </td>
+                        <td>${f.kennzeichen}</td>
+                        <td>${f.adresse || '-'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editFahrzeug(${f.fahrzeug_id})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteFahrzeug(${f.fahrzeug_id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
                 `).join('');
+
+                // Load defekte
+                const defektResponse = await fetch(`${API_URL}/fahrzeug/defekt/`);
+                const defekte = await defektResponse.json();
+
+                const container = document.getElementById('defekt-fahrzeuge-container');
+                if (defekte.length === 0) {
+                    container.innerHTML = '<p class="text-muted">Keine defekten Fahrzeuge</p>';
+                } else {
+                    container.innerHTML = defekte.map(f => `
+                        <div class="alert alert-warning mb-2">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>${f.kennzeichen}</strong> (${f.fahrzeug_id}) ist defekt<br>
+                            Standort: ${f.adresse}
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading fahrzeuge:', error);
+                const tbody = document.getElementById('fahrzeug-tbody');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Fehler beim Laden der Fahrzeuge</td></tr>';
+                }
             }
         }
 
@@ -1068,47 +1239,72 @@
 
             const data = {
                 tour_id: parseInt(document.getElementById('tour-id').value),
-                tour_stopps: parseInt(document.getElementById('tour-stopps').value),
+                tour_standart: document.getElementById('tour-standart').value,
                 tour_zeit: document.getElementById('tour-zeit').value
             };
 
-            await fetch(`${API_URL}/tour/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-
-            alert('Tour hinzugefügt!');
-            event.target.reset();
-            loadTour();
+            try {
+                const response = await fetch(`${API_URL}/tour/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${error}`);
+                }
+                
+                alert('Tour hinzugefügt!');
+                event.target.reset();
+                await Promise.allSettled([
+                    loadDashboard().catch(e => console.error('Dashboard error:', e)),
+                    loadTour().catch(e => console.error('Tour error:', e)),
+                    loadDropdowns().catch(e => console.error('Dropdowns error:', e)),
+                    loadSendungen().catch(e => console.error('Sendungen error:', e))
+                ]);
+            } catch (error) {
+                console.error('Error creating tour:', error);
+                alert('Fehler beim Hinzufügen der Tour: ' + error.message);
+            }
         }
 
         // Tourauftrag
         async function loadTour() {
-            const response = await fetch(`${API_URL}/tour/`);
-            const tours = await response.json();
+            try {
+                const response = await fetch(`${API_URL}/tour/`);
+                if (!response.ok) throw new Error(`Error loading tours: ${response.status}`);
+                let tours = await response.json();
+                tours = sortData(tours, 'tour_id', true); // Sortiere nach ID aufsteigend
 
-            const tbody = document.getElementById('tour-tbody');
-            if (tours.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center">Keine Touren</td></tr>';
-                return;
+                const tbody = document.getElementById('tour-tbody');
+                if (tours.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center">Keine Touren</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = tours.map(t => `
+                    <tr>
+                        <td>${t.tour_id}</td>
+                        <td>${t.tour_standart}</td>
+                        <td>${t.tour_zeit}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editTour(${t.tour_id})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteTour(${t.tour_id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading tours:', error);
+                const tbody = document.getElementById('tour-tbody');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Fehler beim Laden der Touren</td></tr>';
+                }
             }
-
-            tbody.innerHTML = tours.map(t => `
-                <tr>
-                    <td>${t.tour_id}</td>
-                    <td>${t.tour_stopps}</td>
-                    <td>${t.tour_zeit}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editTour(${t.tour_id})">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteTour(${t.tour_id})">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
         }
 
         function resetTourForm() {
@@ -1125,31 +1321,56 @@
                 telefonnummer: document.getElementById('vz-telefon').value
             };
 
-            await fetch(`${API_URL}/verteilungszentrum/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-
-            alert('Verteilungszentrum hinzugefügt!');
-            event.target.reset();
-            loadVZ();
+            try {
+                const response = await fetch(`${API_URL}/verteilungszentrum/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${error}`);
+                }
+                
+                alert('Verteilungszentrum hinzugefügt!');
+                event.target.reset();
+                await Promise.allSettled([
+                    loadDashboard().catch(e => console.error('Dashboard error:', e)),
+                    loadVZ().catch(e => console.error('VZ error:', e)),
+                    loadDropdowns().catch(e => console.error('Dropdowns error:', e)),
+                    loadFahrzeuge().catch(e => console.error('Fahrzeuge error:', e))
+                ]);
+            } catch (error) {
+                console.error('Error creating verteilungszentrum:', error);
+                alert('Fehler beim Hinzufügen des Verteilungszentrums: ' + error.message);
+            }
         }
 
         // Verteilungszentrum
         async function loadVZ() {
-            const response = await fetch(`${API_URL}/verteilungszentrum/`);
-            const vzen = await response.json();
+            try {
+                const response = await fetch(`${API_URL}/verteilungszentrum/`);
+                if (!response.ok) throw new Error(`Error loading verteilungszentren: ${response.status}`);
+                let vzen = await response.json();
+                vzen = sortData(vzen, 'verteilungszentrum_id', true); // Sortiere nach ID aufsteigend
 
-            const container = document.getElementById('vz-grid');
-            container.innerHTML = vzen.map(v => `
-                <div class="kachel" onclick="editVerteilungszentrum(${v.verteilungszentrum_id})">
-                    <i class="bi bi-buildings-fill kachel-icon"></i>
-                    <h6>${v.adresse}</h6>
-                    <p class="small mb-0"><i class="bi bi-telephone"></i> ${v.telefonnummer}</p>
-                    <p class="text-muted small mb-0">${v.verteilungszentrum_id}</p>
-                </div>
-            `).join('');
+                const container = document.getElementById('vz-grid');
+                container.innerHTML = vzen.map(v => `
+                    <div class="kachel" onclick="editVerteilungszentrum(${v.verteilungszentrum_id})">
+                        <i class="bi bi-buildings-fill kachel-icon"></i>
+                        <h6>${v.adresse}</h6>
+                        <p class="small mb-0"><i class="bi bi-telephone"></i> ${v.telefonnummer}</p>
+                        <p class="text-muted small mb-0">${v.verteilungszentrum_id}</p>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading verteilungszentren:', error);
+                const container = document.getElementById('vz-grid');
+                if (container) {
+                    container.innerHTML = '<p class="text-danger">Fehler beim Laden der Verteilungszentren</p>';
+                }
+            }
         }
 
         function resetVZForm() {
@@ -1192,37 +1413,43 @@
         // Edit Modal Functions
         async function editSendung(id, kunde_id, tour_id) {
             const response = await fetch(`${API_URL}/sendung/${id}`);
-            const data = await response.json();
+            const dataArray = await response.json();
+            const data = Array.isArray(dataArray) ? dataArray[0] : dataArray;
             editElement('sendung', data);
         }
 
         async function editFahrer(id) {
             const response = await fetch(`${API_URL}/fahrer/${id}`);
-            const data = await response.json();
+            const dataArray = await response.json();
+            const data = Array.isArray(dataArray) ? dataArray[0] : dataArray;
             editElement('fahrer', data);
         }
 
         async function editFahrzeug(id) {
             const response = await fetch(`${API_URL}/fahrzeug/${id}`);
-            const data = await response.json();
+            const dataArray = await response.json();
+            const data = Array.isArray(dataArray) ? dataArray[0] : dataArray;
             editElement('fahrzeug', data);
         }
 
         async function editTour(id) {
             const response = await fetch(`${API_URL}/tour/${id}`);
-            const data = await response.json();
+            const dataArray = await response.json();
+            const data = Array.isArray(dataArray) ? dataArray[0] : dataArray;
             editElement('tour', data);
         }
 
         async function editVerteilungszentrum(id) {
             const response = await fetch(`${API_URL}/verteilungszentrum/${id}`);
-            const data = await response.json();
+            const dataArray = await response.json();
+            const data = Array.isArray(dataArray) ? dataArray[0] : dataArray;
             editElement('verteilungszentrum', data);
         }
 
         async function editKunde(id) {
             const response = await fetch(`${API_URL}/kunde/${id}`);
-            const data = await response.json();
+            const dataArray = await response.json();
+            const data = Array.isArray(dataArray) ? dataArray[0] : dataArray;
             editElement('kunde', data);
         }
 
@@ -1334,9 +1561,9 @@
                             <label class="form-label">Tour ID</label>
                             <input type="number" class="form-control" id="edit-${name}-id" value="${data.tour_id}">
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Stopps</label>
-                            <input type="number" class="form-control" id="edit-${name}-stopps" value="${data.tour_stopps}">
+                        <div class="col-md-9">
+                            <label class="form-label">Route</label>
+                            <input type="text" class="form-control" id="edit-${name}-standart" value="${data.tour_standart}" placeholder="z.B. Berlin -> Hamburg -> Bremen">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Zeit</label>
@@ -1364,6 +1591,11 @@
 
             document.getElementById('editFormContent').innerHTML = html;
 
+            // Load dropdowns if needed for edit forms
+            if (name === 'sendung' || name === 'fahrzeug' || name === 'tour') {
+                loadEditDropdowns();
+            }
+
             const modal = new bootstrap.Modal(document.getElementById('editModal'));
             modal.show();
         }
@@ -1371,47 +1603,150 @@
         // Delete Functions
         async function deleteKunde(id) {
             if (!confirm('Kunde löschen?')) return;
-            await fetch(`${API_URL}/kunde/${id}`, { method: 'DELETE' });
-            loadKundenGrid();
+            try {
+                const response = await fetch(`${API_URL}/kunde/${id}`, { method: 'DELETE' });
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${error}`);
+                }
+                alert('Kunde gelöscht!');
+                await Promise.allSettled([
+                    loadDashboard().catch(e => console.error('Dashboard error:', e)),
+                    loadKundenGrid().catch(e => console.error('Kunden error:', e)),
+                    loadDropdowns().catch(e => console.error('Dropdowns error:', e)),
+                    loadSendungen().catch(e => console.error('Sendungen error:', e))
+                ]);
+            } catch (error) {
+                console.error('Error deleting kunde:', error);
+                alert('Fehler beim Löschen: ' + error.message);
+            }
         }
 
         async function deleteSendung(id) {
             if (!confirm('Sendung löschen?')) return;
-            await fetch(`${API_URL}/sendung/${id}`, { method: 'DELETE' });
-            loadSendungen();
+            try {
+                const response = await fetch(`${API_URL}/sendung/${id}`, { method: 'DELETE' });
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${error}`);
+                }
+                alert('Sendung gelöscht!');
+                await Promise.allSettled([
+                    loadDashboard().catch(e => console.error('Dashboard error:', e)),
+                    loadSendungen().catch(e => console.error('Sendungen error:', e)),
+                    filterSendungen('all').catch(e => console.error('Filter error:', e))
+                ]);
+            } catch (error) {
+                console.error('Error deleting sendung:', error);
+                alert('Fehler beim Löschen: ' + error.message);
+            }
         }
 
         async function deleteFahrer(id) {
             if (!confirm('Fahrer löschen?')) return;
-            await fetch(`${API_URL}/fahrer/${id}`, { method: 'DELETE' });
-            loadFahrer();
+            try {
+                const response = await fetch(`${API_URL}/fahrer/${id}`, { method: 'DELETE' });
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${error}`);
+                }
+                alert('Fahrer gelöscht!');
+                await Promise.allSettled([
+                    loadDashboard().catch(e => console.error('Dashboard error:', e)),
+                    loadFahrer().catch(e => console.error('Fahrer error:', e)),
+                    loadDropdowns().catch(e => console.error('Dropdowns error:', e))
+                ]);
+            } catch (error) {
+                console.error('Error deleting fahrer:', error);
+                alert('Fehler beim Löschen: ' + error.message);
+            }
         }
 
         async function deleteFahrzeug(id) {
             if (!confirm('Fahrzeug löschen?')) return;
-            await fetch(`${API_URL}/fahrzeug/${id}`, { method: 'DELETE' });
-            loadFahrzeuge();
+            try {
+                const response = await fetch(`${API_URL}/fahrzeug/${id}`, { method: 'DELETE' });
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${error}`);
+                }
+                alert('Fahrzeug gelöscht!');
+                await Promise.allSettled([
+                    loadDashboard().catch(e => console.error('Dashboard error:', e)),
+                    loadFahrzeuge().catch(e => console.error('Fahrzeuge error:', e))
+                ]);
+            } catch (error) {
+                console.error('Error deleting fahrzeug:', error);
+                alert('Fehler beim Löschen: ' + error.message);
+            }
         }
 
         async function deleteTour(id) {
             if (!confirm('Tour löschen?')) return;
-            await fetch(`${API_URL}/tour/${id}`, { method: 'DELETE' });
-            loadTour();
+            try {
+                const response = await fetch(`${API_URL}/tour/${id}`, { method: 'DELETE' });
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${error}`);
+                }
+                alert('Tour gelöscht!');
+                await Promise.allSettled([
+                    loadDashboard().catch(e => console.error('Dashboard error:', e)),
+                    loadTour().catch(e => console.error('Tour error:', e)),
+                    loadDropdowns().catch(e => console.error('Dropdowns error:', e))
+                ]);
+            } catch (error) {
+                console.error('Error deleting tour:', error);
+                alert('Fehler beim Löschen: ' + error.message);
+            }
         }
 
         async function deleteVerteilungszentrum(id) {
             if (!confirm('Verteilungszentrum löschen?')) return;
-            await fetch(`${API_URL}/verteilungszentrum/${id}`, { method: 'DELETE' });
-            loadVZ();
+            try {
+                const response = await fetch(`${API_URL}/verteilungszentrum/${id}`, { method: 'DELETE' });
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${error}`);
+                }
+                alert('Verteilungszentrum gelöscht!');
+                await Promise.allSettled([
+                    loadDashboard().catch(e => console.error('Dashboard error:', e)),
+                    loadVZ().catch(e => console.error('VZ error:', e)),
+                    loadDropdowns().catch(e => console.error('Dropdowns error:', e))
+                ]);
+            } catch (error) {
+                console.error('Error deleting verteilungszentrum:', error);
+                alert('Fehler beim Löschen: ' + error.message);
+            }
         }
 
         // Save Edit
         document.getElementById('editModalSaveBtn').addEventListener('click', async () => {
             if (!currentEditType || !currentEditData) return;
 
-            const url = currentEditType === 'sendung'
-                ? `${API_URL}/sendung/${currentEditData.sendung_id}`
-                : `${API_URL}/${currentEditType}/${currentEditData[currentEditType === 'verteilungszentrum' ? 'id' : currentEditData.name.replace(/\s/g, '')]}${currentEditType === 'tour' ? '' : ''}`;
+            // Construct URL based on type
+            let url;
+            switch(currentEditType) {
+                case 'sendung':
+                    url = `${API_URL}/sendung/${currentEditData.sendung_id}`;
+                    break;
+                case 'fahrer':
+                    url = `${API_URL}/fahrer/${currentEditData.fahrer_id}`;
+                    break;
+                case 'fahrzeug':
+                    url = `${API_URL}/fahrzeug/${currentEditData.fahrzeug_id}`;
+                    break;
+                case 'tour':
+                    url = `${API_URL}/tour/${currentEditData.tour_id}`;
+                    break;
+                case 'kunde':
+                    url = `${API_URL}/kunde/${currentEditData.kunde_id}`;
+                    break;
+                case 'verteilungszentrum':
+                    url = `${API_URL}/verteilungszentrum/${currentEditData.verteilungszentrum_id}`;
+                    break;
+            }
 
             let editDataPayload;
             switch(currentEditType) {
@@ -1454,7 +1789,7 @@
                 case 'tour':
                     editDataPayload = {
                         tour_id: document.getElementById('edit-tour-id').value,
-                        tour_stopps: parseInt(document.getElementById('edit-tour-stopps').value),
+                        tour_standart: document.getElementById('edit-tour-standart').value,
                         tour_zeit: document.getElementById('edit-tour-zeit').value
                     };
                     break;
@@ -1467,22 +1802,39 @@
                     break;
             }
 
-            await fetch(`${API_URL}/${currentEditType}/${currentEditData.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(editDataPayload)
-            });
+            try {
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(editDataPayload)
+                });
 
-            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-            currentEditType = null;
-            currentEditData = null;
-            loadDashboard();
-            loadSendungen();
-            loadFahrer();
-            loadFahrzeuge();
-            loadTour();
-            loadVZ();
-            loadKundenGrid();
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${error}`);
+                }
+
+                bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                currentEditType = null;
+                currentEditData = null;
+                alert('Erfolgreich gespeichert!');
+                
+                // Neuladen aller Listen - mit fehlertoleranz
+                await Promise.allSettled([
+                    loadDashboard().catch(e => console.error('Dashboard load error:', e)),
+                    loadKundenGrid().catch(e => console.error('Kunden load error:', e)),
+                    loadSendungen().catch(e => console.error('Sendungen load error:', e)),
+                    filterSendungen('all').catch(e => console.error('Filter sendungen error:', e)),
+                    loadFahrer().catch(e => console.error('Fahrer load error:', e)),
+                    loadFahrzeuge().catch(e => console.error('Fahrzeuge load error:', e)),
+                    loadTour().catch(e => console.error('Tour load error:', e)),
+                    loadVZ().catch(e => console.error('VZ load error:', e)),
+                    loadDropdowns().catch(e => console.error('Dropdowns load error:', e))
+                ]);
+            } catch (error) {
+                console.error('Error saving:', error);
+                alert('Fehler beim Speichern: ' + error.message);
+            }
         });
 
         // View Customer Sendungen
@@ -1505,81 +1857,93 @@
 
         // Filter Sendungen
         async function filterSendungen(type) {
-            const response = await fetch(`${API_URL}/sendung/`);
-            let sendungen = await response.json();
+            try {
+                const response = await fetch(`${API_URL}/sendung/`);
+                let sendungen = await response.json();
+                sendungen = sortData(sendungen, 'sendung_id', true);
 
-            if (type === 'heavy') {
-                const heavyResponse = await fetch(`${API_URL}/sendung/heavy/`);
-                sendungen = await heavyResponse.json();
-            }
+                if (type === 'heavy') {
+                    const heavyResponse = await fetch(`${API_URL}/sendung/heavy/`);
+                    sendungen = await heavyResponse.json();
+                    sendungen = sortData(sendungen, 'sendung_id', true);
+                }
 
-            const tbody = document.getElementById('sendungen-tbody-full');
-            if (sendungen.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center">Keine Sendungen</td></tr>';
-            } else {
-                tbody.innerHTML = sendungen.map(s => `
-                    <tr>
-                        <td>${s.sendung_id}</td>
-                        <td>${s.kunde_id}</td>
-                        <td>${s.tour_id}</td>
-                        <td>${s.groesse} m²</td>
-                        <td>${s.gewicht} kg</td>
-                        <td>${s.anmerkung || '-'}</td>
-                        <td>${s.adresse_liefer}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick="editSendung(${s.sendung_id}, ${s.kunde_id}, ${s.tour_id})">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSendung(${s.sendung_id})">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
+                const tbody = document.getElementById('sendungen-tbody-full');
+                if (sendungen.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center">Keine Sendungen</td></tr>';
+                } else {
+                    tbody.innerHTML = sendungen.map(s => `
+                        <tr>
+                            <td>${s.sendung_id}</td>
+                            <td>${s.kunde_id}</td>
+                            <td>${s.tour_id}</td>
+                            <td>${s.groesse} m²</td>
+                            <td>${s.gewicht} kg</td>
+                            <td>${s.anmerkung || '-'}</td>
+                            <td>${s.adresse_liefer}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="editSendung(${s.sendung_id}, ${s.kunde_id}, ${s.tour_id})">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteSendung(${s.sendung_id})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error filtering sendungen:', error);
             }
         }
 
-        // Load Dropdowns
+        // Load Dropdowns for Edit Forms
         async function loadEditDropdowns() {
-            // Kunden
-            const kundeSelect = document.getElementById('edit-sendung-kunde');
-            const kundeResponse = await fetch(`${API_URL}/kunde/`);
-            const kunden = await kundeResponse.json();
-            kundeSelect.innerHTML = kunden.map(k => `<option value="${k.kunde_id}">${k.name} (${k.kunde_id})</option>`).join('');
+            try {
+                // Touren für Sendung
+                const tourSelect = document.getElementById('edit-sendung-tour');
+                if (tourSelect) {
+                    const tourResponse = await fetch(`${API_URL}/tour/`);
+                    const tours = await tourResponse.json();
+                    tourSelect.innerHTML = tours.map(t => `<option value="${t.tour_id}">${t.tour_standart} - ${t.tour_zeit}</option>`).join('');
+                }
 
-            // Touren
-            const tourSelect = document.getElementById('edit-sendung-tour');
-            const tourResponse = await fetch(`${API_URL}/tour/`);
-            const tours = await tourResponse.json();
-            tourSelect.innerHTML = tours.map(t => `<option value="${t.tour_id}">${t.tour_stopps} Stopps - ${t.tour_zeit} Uhr</option>`).join('');
+                // Kunden für Sendung
+                const kundeSelect = document.getElementById('edit-sendung-kunde');
+                if (kundeSelect) {
+                    const kundeResponse = await fetch(`${API_URL}/kunde/`);
+                    const kunden = await kundeResponse.json();
+                    kundeSelect.innerHTML = kunden.map(k => `<option value="${k.kunde_id}">${k.name} (${k.kunde_id})</option>`).join('');
+                }
 
-            // Verteilungszentren
-            const vzSelect = document.getElementById('edit-fahrzeug-vz');
-            const vzResponse = await fetch(`${API_URL}/verteilungszentrum/`);
-            const vzen = await vzResponse.json();
-            vzSelect.innerHTML = vzen.map(v => `<option value="${v.verteilungszentrum_id}">${v.adresse}</option>`).join('');
-
-            // Fahrer
-            const fahrerSelect = document.getElementById('edit-tour-fahrer-select');
-            const fahrerResponse = await fetch(`${API_URL}/fahrer/`);
-            const fahrer = await fahrerResponse.json();
-            fahrerSelect.innerHTML = fahrer.map(f => `<option value="${f.fahrer_id}">${f.name} (${f.fahrer_id})</option>`).join('');
-
-            // Touren (für Fahrer)
-            const tourSelectTour = document.getElementById('edit-tour-fahrer-tour-select');
-            tourSelectTour.innerHTML = tours.map(t => `<option value="${t.tour_id}">${t.tour_stopps} Stopps - ${t.tour_zeit} Uhr</option>`).join('');
+                // Verteilungszentren für Fahrzeug
+                const vzSelect = document.getElementById('edit-fahrzeug-vz');
+                if (vzSelect) {
+                    const vzResponse = await fetch(`${API_URL}/verteilungszentrum/`);
+                    const vzen = await vzResponse.json();
+                    vzSelect.innerHTML = vzen.map(v => `<option value="${v.verteilungszentrum_id}">${v.adresse}</option>`).join('');
+                }
+            } catch (error) {
+                console.error('Error loading edit dropdowns:', error);
+            }
         }
 
         // Initial load
         async function init() {
-            await loadDashboard();
-            await loadDropdowns();
-            await loadKundenGrid();
-            await loadSendungen();
-            await loadFahrer();
-            await loadFahrzeuge();
-            await loadTour();
-            await loadVZ();
+            console.log('Initializing...');
+            try {
+                await loadDashboard().catch(e => console.error('Dashboard error:', e));
+                await loadDropdowns().catch(e => console.error('Dropdowns error:', e));
+                await loadKundenGrid().catch(e => console.error('Kunden error:', e));
+                await loadSendungen().catch(e => console.error('Sendungen error:', e));
+                await loadFahrer().catch(e => console.error('Fahrer error:', e));
+                await loadFahrzeuge().catch(e => console.error('Fahrzeuge error:', e));
+                await loadTour().catch(e => console.error('Touren error:', e));
+                await loadVZ().catch(e => console.error('VZ error:', e));
+                console.log('Initialization complete');
+            } catch (error) {
+                console.error('Critical error during initialization:', error);
+            }
         }
 
         init();
