@@ -490,6 +490,9 @@
                                 <button class="btn btn-sm btn-outline-secondary" onclick="filterSendungen('heavy')">
                                     <i class="bi bi-weight me-1"></i>Schwere Sendungen
                                 </button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="filterSendungen('unplanned')">
+                                    <i class="bi bi-truck me-1"></i>Unverplante Sendungen
+                                </button>
                                 <button class="btn btn-sm btn-outline-secondary" onclick="filterSendungen('normal')">
                                     <i class="bi bi-check me-1"></i>Alle anzeigen
                                 </button>
@@ -804,6 +807,7 @@
                                         <th>Fahrzeug ID(s)</th>
                                         <th>Kennzeichen</th>
                                         <th>Anzahl Pakete</th>
+                                        <th>Gesamtgewicht</th>
                                         <th>Paket IDs</th>
                                     </tr>
                                 </thead>
@@ -1646,7 +1650,7 @@
                 if (!tbody) return;
 
                 if (sendungen.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Keine Touren vorhanden</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center">Keine Touren vorhanden</td></tr>';
                     return;
                 }
 
@@ -1656,6 +1660,7 @@
                         <td>${s.fahrzeug_ids}</td>
                         <td>${s.kennzeichen}</td>
                         <td>${s.paket_anzahl}</td>
+                        <td>${s.gesamtgewicht} kg</td>
                         <td>${s.paket_ids}</td>
                     </tr>
                 `).join('');
@@ -1663,7 +1668,7 @@
                 console.error('Error loading sendungen mit fahrzeug:', error);
                 const tbody = document.getElementById('sendungen-fahrzeug-tbody');
                 if (tbody) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Fehler beim Laden der Touren</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Fehler beim Laden der Touren</td></tr>';
                 }
             }
         }
@@ -2338,6 +2343,10 @@
                 if (type === 'heavy') {
                     const heavyResponse = await fetch(`${API_URL}/sendung/heavy/`);
                     sendungen = await heavyResponse.json();
+                    sendungen = sortData(sendungen, 'sendung_id', true);
+                } else if (type === 'unplanned') {
+                    const unplannedResponse = await fetch(`${API_URL}/sendung/unverplant/`);
+                    sendungen = await unplannedResponse.json();
                     sendungen = sortData(sendungen, 'sendung_id', true);
                 }
 

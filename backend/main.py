@@ -22,6 +22,20 @@ conn = psycopg2.connect(
 
 app = FastAPI()
 
+
+@app.middleware("http")
+async def rollback_failed_transactions(request, call_next):
+    try:
+        return await call_next(request)
+    except Exception:
+        # A failed SQL statement poisons the current transaction in psycopg2.
+        # Roll it back so following requests can run normally.
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+        raise
+
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
@@ -97,6 +111,44 @@ cur = conn.cursor()
 
 def ensure_frontend_views():
     """Create or refresh DB views used by the main frontend screens."""
+    # Keep legacy and current tour column names compatible.
+    cur.execute(
+        """
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = 'versand_dienstleister'
+                  AND table_name = 'tour'
+            ) THEN
+                IF NOT EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_schema = 'versand_dienstleister'
+                      AND table_name = 'tour'
+                      AND column_name = 'tour_standart'
+                ) THEN
+                    ALTER TABLE versand_dienstleister.tour
+                    ADD COLUMN tour_standart varchar(1000);
+                END IF;
+
+                IF EXISTS (
+                    SELECT 1
+                    FROM information_schema.columns
+                    WHERE table_schema = 'versand_dienstleister'
+                      AND table_name = 'tour'
+                      AND column_name = 'tour_route'
+                ) THEN
+                    UPDATE versand_dienstleister.tour
+                    SET tour_standart = COALESCE(tour_standart, tour_route);
+                END IF;
+            END IF;
+        END
+        $$;
+        """
+    )
+
     cur.execute(
         """
         CREATE OR REPLACE VIEW versand_dienstleister.v_frontend_kunden AS
@@ -152,10 +204,13 @@ def ensure_frontend_views():
             ON s.tour_id = t.tour_id
         GROUP BY t.tour_id, t.tour_standart, t.tour_zeit;
 
+        DROP VIEW IF EXISTS versand_dienstleister.v_frontend_touren_mit_fahrzeug_und_paketen;
+
         CREATE OR REPLACE VIEW versand_dienstleister.v_frontend_touren_mit_fahrzeug_und_paketen AS
         WITH paket_agg AS (
             SELECT s.tour_id,
                    COUNT(s.sendung_id) AS paket_anzahl,
+                   COALESCE(SUM(s.gewicht), 0) AS gesamtgewicht,
                    COALESCE(STRING_AGG(s.sendung_id::text, ', ' ORDER BY s.sendung_id), 'Keine Pakete') AS paket_ids
             FROM versand_dienstleister.sendung s
             GROUP BY s.tour_id
@@ -178,7 +233,8 @@ def ensure_frontend_views():
                COALESCE(fahrzeug_agg.fahrzeug_ids, 'Kein Fahrzeug') AS fahrzeug_ids,
                COALESCE(fahrzeug_agg.kennzeichen, 'Kein Fahrzeug') AS kennzeichen,
                COALESCE(paket_agg.paket_anzahl, 0) AS paket_anzahl,
-               COALESCE(paket_agg.paket_ids, 'Keine Pakete') AS paket_ids
+               COALESCE(paket_agg.paket_ids, 'Keine Pakete') AS paket_ids,
+               COALESCE(paket_agg.gesamtgewicht, 0) AS gesamtgewicht
         FROM versand_dienstleister.tour t
         LEFT JOIN paket_agg
             ON paket_agg.tour_id = t.tour_id
@@ -195,6 +251,7 @@ def ensure_frontend_views():
 try:
     ensure_frontend_views()
 except Exception as e:
+    conn.rollback()
     print(f"Views konnten nicht erstellt werden: {e}")
 
 # Utils
@@ -498,10 +555,23 @@ def get_Sendung_id(id):
 @app.get("/sendung/heavy/")
 def get_schwere_Sendungen():
     cur.execute(
-        """SELECT sendung_id, gewicht
-        FROM versand_dienstleister.sendung
-        WHERE gewicht > 10;
-    """)
+        """SELECT *
+           FROM versand_dienstleister.sendung
+           WHERE gewicht > 10
+           ORDER BY sendung_id;"""
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.get("/sendung/unverplant/")
+def get_unverplante_Sendungen():
+    cur.execute(
+        """SELECT s.*
+           FROM versand_dienstleister.sendung s
+           LEFT OUTER JOIN versand_dienstleister.tour t
+               ON s.tour_id = t.tour_id
+           WHERE t.tour_id IS NULL
+           ORDER BY s.sendung_id;"""
+    )
     return to_json_liste(cur.fetchall(), cur.description)
 
 @app.get("/sendung/{id}/verteilungszentrum/")
