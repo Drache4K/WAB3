@@ -552,6 +552,23 @@ def get_Sendung_id(id):
     )
     return to_json_liste(cur.fetchall(), cur.description)
 
+@app.get("/sendung/{id}/verlauf/")
+def get_sendungsverlauf(id: int):
+    cur.execute(
+        """SELECT sv.sendung_id,
+                  sv.datum,
+                  sv.versendet,
+                  sv.verteilungszentrum_id,
+                  v.adresse AS verteilungszentrum_adresse
+           FROM versand_dienstleister.sendungsverfolgung sv
+           LEFT JOIN versand_dienstleister.verteilungszentrum v
+               ON v.verteilungszentrum_id = sv.verteilungszentrum_id
+           WHERE sv.sendung_id = %s
+           ORDER BY sv.datum DESC;""",
+        (id,)
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
+
 @app.get("/sendung/heavy/")
 def get_schwere_Sendungen():
     cur.execute(

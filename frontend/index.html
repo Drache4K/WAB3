@@ -517,6 +517,44 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="col-12 mt-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <span><i class="bi bi-clock-history me-2"></i>Sendeverlauf nach Paket-ID</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3 align-items-end mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Paket-ID</label>
+                                    <input type="number" class="form-control" id="sendungsverlauf-id" placeholder="z. B. 1001">
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-primary w-100" onclick="loadSendungsverlaufById()">
+                                        <i class="bi bi-search me-1"></i>Verlauf anzeigen
+                                    </button>
+                                </div>
+                            </div>
+
+                            <table class="table table-hover table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Paket-ID</th>
+                                        <th>Datum</th>
+                                        <th>Status</th>
+                                        <th>Verteilungszentrum-ID</th>
+                                        <th>Adresse Verteilungszentrum</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sendungsverlauf-tbody">
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">Bitte Paket-ID eingeben und Verlauf laden</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -2376,6 +2414,47 @@
                 }
             } catch (error) {
                 console.error('Error filtering sendungen:', error);
+            }
+        }
+
+        async function loadSendungsverlaufById() {
+            const input = document.getElementById('sendungsverlauf-id');
+            const tbody = document.getElementById('sendungsverlauf-tbody');
+
+            if (!input || !tbody) return;
+
+            const sendungId = parseInt(input.value, 10);
+            if (Number.isNaN(sendungId)) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-warning">Bitte eine gueltige Paket-ID eingeben</td></tr>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/sendung/${sendungId}/verlauf/`);
+                if (!response.ok) {
+                    throw new Error(`Error loading sendungsverlauf: ${response.status}`);
+                }
+
+                let verlauf = await response.json();
+                verlauf = sortData(verlauf, 'datum', false);
+
+                if (verlauf.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Kein Verlauf fuer diese Paket-ID gefunden</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = verlauf.map(v => `
+                    <tr>
+                        <td>${v.sendung_id}</td>
+                        <td>${v.datum || '-'}</td>
+                        <td>${v.versendet ? '<span class="badge bg-success">Versendet</span>' : '<span class="badge bg-warning text-dark">In Bearbeitung</span>'}</td>
+                        <td>${v.verteilungszentrum_id || '-'}</td>
+                        <td>${v.verteilungszentrum_adresse || '-'}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading sendungsverlauf:', error);
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Fehler beim Laden des Sendeverlaufs</td></tr>';
             }
         }
 
