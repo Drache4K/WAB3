@@ -463,6 +463,10 @@
                                             <option value="0">-- Keine Tour --</option>
                                         </select>
                                     </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Verteilungszentrum</label>
+                                        <select class="form-select" id="sendung-verteilungszentrum" required></select>
+                                    </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Lieferadresse</label>
                                         <input type="text" class="form-control" id="sendung-adresse" required>
@@ -1184,6 +1188,11 @@
             const vzen = await vzResponse.json();
             vzSelect.innerHTML = vzen.map(v => `<option value="${v.verteilungszentrum_id}">${v.adresse}</option>`).join('');
 
+            const sendungVzSelect = document.getElementById('sendung-verteilungszentrum');
+            if (sendungVzSelect) {
+                sendungVzSelect.innerHTML = vzen.map(v => `<option value="${v.verteilungszentrum_id}">${v.adresse}</option>`).join('');
+            }
+
             // Fahrer dropdown
             const fahrerSelect = document.getElementById('tour-fahrer-select');
             const fahrerResponse = await fetch(`${API_URL}/fahrer/`);
@@ -1209,6 +1218,7 @@
                 gewicht: parseFloat(document.getElementById('sendung-gewicht').value),
                 kunde_id: parseInt(document.getElementById('sendung-kunde').value),
                 tour_id: parseInt(document.getElementById('sendung-tour').value),
+                verteilungszentrum_id: parseInt(document.getElementById('sendung-verteilungszentrum').value),
                 adresse_liefer: document.getElementById('sendung-adresse').value,
                 anmerkung: document.getElementById('sendung-anmerkung').value
             };

@@ -4,7 +4,7 @@ import json
 import datetime
 import dotenv
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 import uvicorn
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -62,6 +62,7 @@ class Sendung(BaseModel):
     adresse_liefer: str
     tour_id: int
     kunde_id: int
+    verteilungszentrum_id: int | None = None
 
 class Fahrer(BaseModel):
     fahrer_id: int
@@ -607,6 +608,8 @@ def get_Sendung_Verteilungszenter(id: int):
 def create_sendung(sendung: Sendung):
     # tour_id 0 bedeutet keine Tour -> NULL
     tour_id = sendung.tour_id if sendung.tour_id != 0 else None
+    if sendung.verteilungszentrum_id is None:
+        raise HTTPException(status_code=400, detail="verteilungszentrum_id ist erforderlich")
     
     cur.execute(
         """--sql
@@ -616,9 +619,9 @@ def create_sendung(sendung: Sendung):
         VALUES (%s,%s,%s,%s,%s,%s,%s);
         
         INSERT INTO versand_dienstleister.sendungsverfolgung
-        (sendung_id, datum, versendet)
-        VALUES (%s, CURRENT_DATE, False);
-        COMMIT;""", (sendung.sendung_id, sendung.groesse, sendung.gewicht, sendung.anmerkung, sendung.adresse_liefer, tour_id, sendung.kunde_id, sendung.sendung_id)
+        (sendung_id, datum, versendet, verteilungszentrum_id)
+        VALUES (%s, CURRENT_DATE, False, %s);
+        COMMIT;""", (sendung.sendung_id, sendung.groesse, sendung.gewicht, sendung.anmerkung, sendung.adresse_liefer, tour_id, sendung.kunde_id, sendung.sendung_id, sendung.verteilungszentrum_id)
     )
     conn.commit()
     return {"status": "success", "message": "Sendung created"}
