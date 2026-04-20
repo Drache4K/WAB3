@@ -223,6 +223,21 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="#sendungen-fahrzeug" onclick="showSection('sendungen-fahrzeug')">
+                            <i class="bi bi-truck-front me-1"></i>Touren mit Fahrzeug
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#touren-pakete" onclick="showSection('touren-pakete')">
+                            <i class="bi bi-boxes me-1"></i>Touren mit Paketen
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#fahrer-touren" onclick="showSection('fahrer-touren')">
+                            <i class="bi bi-diagram-3 me-1"></i>Fahrer fährt Touren
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="#verteilungszentren" onclick="showSection('verteilungszentren')">
                             <i class="bi bi-buildings me-1"></i>Verteilungszentren
                         </a>
@@ -378,6 +393,7 @@
                                         <th>Name</th>
                                         <th>Telefon</th>
                                         <th>E-Mail</th>
+                                        <th>Pakete</th>
                                         <th>Aktionen</th>
                                     </tr>
                                 </thead>
@@ -560,6 +576,33 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="col-12 mt-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-truck-front me-2"></i>Fahrer und zugeordnete Fahrzeuge</span>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="loadFahrerFaehrtFahrzeug()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Aktualisieren
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-hover table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Datum</th>
+                                        <th>Fahrer ID</th>
+                                        <th>Fahrer</th>
+                                        <th>Fahrzeug ID</th>
+                                        <th>Kennzeichen</th>
+                                        <th>Status</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fahrer-fahrzeug-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -718,7 +761,7 @@
                                     <select class="form-select" id="tour-fahrer-select"></select>
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label">Tour ID</label>
+                                    <label class="form-label">Tour (ID)</label>
                                     <select class="form-select" id="tour-fahrer-tour-select"></select>
                                 </div>
                                 <div class="col-md-3">
@@ -732,6 +775,110 @@
                                     </button>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sendungen nach Fahrzeug Section -->
+        <section id="sendungen-fahrzeug" class="section d-none">
+            <div class="row">
+                <div class="col-12 text-center mb-4">
+                    <h2 class="section-title">Touren mit Fahrzeug und Paketen</h2>
+                </div>
+
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-truck-front me-2"></i>Nach Tour sortiert</span>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="loadSendungenMitFahrzeug()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Aktualisieren
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-hover table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Tour</th>
+                                        <th>Fahrzeug ID(s)</th>
+                                        <th>Kennzeichen</th>
+                                        <th>Anzahl Pakete</th>
+                                        <th>Paket IDs</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sendungen-fahrzeug-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Touren mit Paketen Section -->
+        <section id="touren-pakete" class="section d-none">
+            <div class="row">
+                <div class="col-12 text-center mb-4">
+                    <h2 class="section-title">Touren mit Paketen</h2>
+                </div>
+
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-boxes me-2"></i>Pakete je Tour</span>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="loadTourenMitPaketen()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Aktualisieren
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-hover table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Tour ID</th>
+                                        <th>Route</th>
+                                        <th>Zeit</th>
+                                        <th>Anzahl Pakete</th>
+                                        <th>Paket IDs</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="touren-pakete-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Fahrer fährt Touren Section -->
+        <section id="fahrer-touren" class="section d-none">
+            <div class="row">
+                <div class="col-12 text-center mb-4">
+                    <h2 class="section-title">Fahrer fährt Touren</h2>
+                </div>
+
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-table me-2"></i>Verknüpfungstabelle</span>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="loadFahrerFaehrtTouren()">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Aktualisieren
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-hover table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Datum</th>
+                                        <th>Fahrer ID</th>
+                                        <th>Fahrer</th>
+                                        <th>Tour ID</th>
+                                        <th>Route</th>
+                                        <th>Zeit</th>
+                                        <th>Aktionen</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fahrer-faehrt-tour-tbody"></tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -829,11 +976,6 @@
         // API Base URL
         const API_URL = 'http://localhost:7000';
 
-        // Zeit formatieren von HH:MM:SS zu HH:MM
-        function formatTime(timeStr) {
-            return timeStr ? timeStr.split(':')[0] + ':' + timeStr.split(':')[1] : '';
-        }
-
         // Globale Variablen für den Edit-Modal
         let currentEditType = null;
         let currentEditData = null;
@@ -904,7 +1046,7 @@
 
                 const tbody = document.getElementById('kunden-tbody');
                 if (kunden.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Keine Kunden</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center">Keine Kunden</td></tr>';
                     return;
                 }
 
@@ -914,6 +1056,7 @@
                         <td>${k.name}</td>
                         <td>${k.telefonnummer}</td>
                         <td>${k.mailadresse}</td>
+                        <td>${k.paket_anzahl}</td>
                         <td>
                             <button class="btn btn-sm btn-outline-primary" onclick="editKunde(${k.kunde_id})">
                                 <i class="bi bi-pencil"></i>
@@ -928,7 +1071,7 @@
                 console.error('Error loading kunden:', error);
                 const tbody = document.getElementById('kunden-tbody');
                 if (tbody) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Fehler beim Laden der Kunden</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Fehler beim Laden der Kunden</td></tr>';
                 }
             }
         }
@@ -991,7 +1134,7 @@
             const tourSelect = document.getElementById('sendung-tour');
             const tourResponse = await fetch(`${API_URL}/tour/`);
             const tours = await tourResponse.json();
-            tourSelect.innerHTML = '<option value="0">-- Keine Tour --</option>' + tours.map(t => `<option value="${t.tour_id}">${formatTime(t.tour_zeit)}</option>`).join('');
+            tourSelect.innerHTML = '<option value="0">-- Keine Tour --</option>' + tours.map(t => `<option value="${t.tour_id}">${t.tour_zeit}</option>`).join('');
 
             // Verteilungszentren dropdown
             const vzSelect = document.getElementById('fahrzeug-verteilungszentrum');
@@ -1007,7 +1150,7 @@
 
             // Fahrer-Tour dropdown
             const fahrerTourSelect = document.getElementById('tour-fahrer-tour-select');
-            fahrerTourSelect.innerHTML = tours.map(t => `<option value="${t.tour_id}">${formatTime(t.tour_zeit)}</option>`).join('');
+            fahrerTourSelect.innerHTML = tours.map(t => `<option value="${t.tour_id}">${t.tour_id} - ${t.tour_standart} (${t.tour_zeit})</option>`).join('');
 
             // Datum für Fahrer-Tour
             const today = new Date().toISOString().split('T')[0];
@@ -1177,6 +1320,77 @@
             document.getElementById('fahrer-form').reset();
         }
 
+        // Fahrer fährt Fahrzeug
+        async function loadFahrerFaehrtFahrzeug() {
+            try {
+                const response = await fetch(`${API_URL}/fahrer-faehrt-fahrzeug/`);
+                if (!response.ok) throw new Error(`Error loading fahrer_faehrt_fahrzeug: ${response.status}`);
+                let zuordnungen = await response.json();
+                zuordnungen = sortData(zuordnungen, 'datum', false);
+
+                const tbody = document.getElementById('fahrer-fahrzeug-tbody');
+                if (!tbody) return;
+
+                if (zuordnungen.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center">Keine Zuordnungen vorhanden</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = zuordnungen.map(z => `
+                    <tr>
+                        <td>${z.datum}</td>
+                        <td>${z.fahrer_id}</td>
+                        <td>${z.fahrer_name}</td>
+                        <td>${z.fahrzeug_id}</td>
+                        <td>${z.kennzeichen}</td>
+                        <td>${z.defekt ? 'Defekt' : 'Betriebsbereit'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editFahrerFaehrtFahrzeug('${z.datum}', ${z.fahrer_id}, ${z.fahrzeug_id})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteFahrerFaehrtFahrzeug('${z.datum}', ${z.fahrer_id}, ${z.fahrzeug_id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading fahrer_faehrt_fahrzeug:', error);
+                const tbody = document.getElementById('fahrer-fahrzeug-tbody');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Fehler beim Laden der Zuordnungen</td></tr>';
+                }
+            }
+        }
+
+        async function editFahrerFaehrtFahrzeug(datum, fahrerId, fahrzeugId) {
+            editElement('fahrer-fahrzeug', {
+                datum: datum,
+                fahrer_id: fahrerId,
+                fahrzeug_id: fahrzeugId
+            });
+        }
+
+        async function deleteFahrerFaehrtFahrzeug(datum, fahrerId, fahrzeugId) {
+            if (!confirm('Zuordnung löschen?')) return;
+            try {
+                const response = await fetch(`${API_URL}/fahrer-faehrt-fahrzeug/${encodeURIComponent(datum)}/${fahrerId}/${fahrzeugId}`, { method: 'DELETE' });
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${error}`);
+                }
+                alert('Zuordnung gelöscht!');
+                await Promise.allSettled([
+                    loadFahrerFaehrtFahrzeug().catch(e => console.error('Fahrer-Fahrzeug error:', e)),
+                    loadFahrer().catch(e => console.error('Fahrer error:', e)),
+                    loadFahrzeuge().catch(e => console.error('Fahrzeuge error:', e))
+                ]);
+            } catch (error) {
+                console.error('Error deleting fahrer_faehrt_fahrzeug:', error);
+                alert('Fehler beim Löschen: ' + error.message);
+            }
+        }
+
         // Fahrzeug Submit
         async function handleFahrzeugSubmit(event) {
             event.preventDefault();
@@ -1330,7 +1544,7 @@
                     <tr>
                         <td>${t.tour_id}</td>
                         <td>${t.tour_standart}</td>
-                        <td>${formatTime(t.tour_zeit)}</td>
+                        <td>${t.tour_zeit}</td>
                         <td>
                             <button class="btn btn-sm btn-outline-primary" onclick="editTour(${t.tour_id})">
                                 <i class="bi bi-pencil"></i>
@@ -1420,26 +1634,183 @@
             document.getElementById('verteilungszentrum-form').reset();
         }
 
+        // Sendungen nach Fahrzeug
+        async function loadSendungenMitFahrzeug() {
+            try {
+                const response = await fetch(`${API_URL}/sendung/mit-fahrzeug/`);
+                if (!response.ok) throw new Error(`Error loading sendungen mit fahrzeug: ${response.status}`);
+                let sendungen = await response.json();
+                sendungen = sortData(sendungen, 'tour_zeit', true);
+
+                const tbody = document.getElementById('sendungen-fahrzeug-tbody');
+                if (!tbody) return;
+
+                if (sendungen.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Keine Touren vorhanden</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = sendungen.map(s => `
+                    <tr>
+                        <td>${s.tour_id ? `${s.tour_id} - ${s.tour_standart} (${s.tour_zeit})` : 'Keine Tour'}</td>
+                        <td>${s.fahrzeug_ids}</td>
+                        <td>${s.kennzeichen}</td>
+                        <td>${s.paket_anzahl}</td>
+                        <td>${s.paket_ids}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading sendungen mit fahrzeug:', error);
+                const tbody = document.getElementById('sendungen-fahrzeug-tbody');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Fehler beim Laden der Touren</td></tr>';
+                }
+            }
+        }
+
+        // Touren mit Paketen
+        async function loadTourenMitPaketen() {
+            try {
+                const response = await fetch(`${API_URL}/tour/mit-paketen/`);
+                if (!response.ok) throw new Error(`Error loading touren mit paketen: ${response.status}`);
+                let touren = await response.json();
+                touren = sortData(touren, 'tour_id', true);
+
+                const tbody = document.getElementById('touren-pakete-tbody');
+                if (!tbody) return;
+
+                if (touren.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">Keine Touren vorhanden</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = touren.map(t => `
+                    <tr>
+                        <td>${t.tour_id}</td>
+                        <td>${t.tour_standart}</td>
+                        <td>${t.tour_zeit}</td>
+                        <td>${t.paket_anzahl}</td>
+                        <td>${t.paket_ids}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading touren mit paketen:', error);
+                const tbody = document.getElementById('touren-pakete-tbody');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Fehler beim Laden</td></tr>';
+                }
+            }
+        }
+
+        // Fahrer fährt Touren
+        async function loadFahrerFaehrtTouren() {
+            try {
+                const response = await fetch(`${API_URL}/fahrer-faehrt-tour/`);
+                if (!response.ok) throw new Error(`Error loading fahrer_faehrt_tour: ${response.status}`);
+                let zuordnungen = await response.json();
+                zuordnungen = sortData(zuordnungen, 'datum', false);
+
+                const tbody = document.getElementById('fahrer-faehrt-tour-tbody');
+                if (!tbody) return;
+
+                if (zuordnungen.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center">Keine Zuordnungen vorhanden</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = zuordnungen.map(z => `
+                    <tr>
+                        <td>${z.datum}</td>
+                        <td>${z.fahrer_id}</td>
+                        <td>${z.fahrer_name}</td>
+                        <td>${z.tour_id}</td>
+                        <td>${z.tour_standart}</td>
+                        <td>${z.tour_zeit}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="editFahrerFaehrtTour('${z.datum}', ${z.fahrer_id}, ${z.tour_id})">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteFahrerFaehrtTour('${z.datum}', ${z.fahrer_id}, ${z.tour_id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading fahrer_faehrt_tour:', error);
+                const tbody = document.getElementById('fahrer-faehrt-tour-tbody');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Fehler beim Laden der Zuordnungen</td></tr>';
+                }
+            }
+        }
+
+        async function editFahrerFaehrtTour(datum, fahrerId, tourId) {
+            const response = await fetch(`${API_URL}/fahrer-faehrt-tour/${encodeURIComponent(datum)}/${fahrerId}/${tourId}`);
+            const dataArray = await response.json();
+            const data = Array.isArray(dataArray) ? dataArray[0] : dataArray;
+            editElement('fahrer-tour', data);
+        }
+
+        async function deleteFahrerFaehrtTour(datum, fahrerId, tourId) {
+            if (!confirm('Fahrer-Tour-Zuordnung löschen?')) return;
+            try {
+                const response = await fetch(`${API_URL}/fahrer-faehrt-tour/${encodeURIComponent(datum)}/${fahrerId}/${tourId}`, { method: 'DELETE' });
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${error}`);
+                }
+                alert('Zuordnung gelöscht!');
+                await Promise.allSettled([
+                    loadFahrerFaehrtTouren().catch(e => console.error('Fahrer-Touren error:', e)),
+                    loadFahrer().catch(e => console.error('Fahrer error:', e)),
+                    loadTour().catch(e => console.error('Tour error:', e))
+                ]);
+            } catch (error) {
+                console.error('Error deleting fahrer_faehrt_tour:', error);
+                alert('Fehler beim Löschen: ' + error.message);
+            }
+        }
+
         // Assign Fahrer to Tour
         async function assignFahrerToTour() {
-            const fahrerId = document.getElementById('tour-fahrer-select').value;
-            const tourId = document.getElementById('tour-fahrer-tour-select').value;
+            const fahrerId = parseInt(document.getElementById('tour-fahrer-select').value);
+            const tourId = parseInt(document.getElementById('tour-fahrer-tour-select').value);
             const datum = document.getElementById('tour-fahrer-datum').value;
 
-            await fetch(`${API_URL}/tour/`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    tour_id: tourId,
-                    tour_stopps: 1,
-                    tour_zeit: '00:00:00'
-                })
-            });
+            if (!datum) {
+                alert('Bitte ein Datum auswählen.');
+                return;
+            }
 
-            alert('Fahrer zu Tour zugeordnet!');
-            loadFahrer();
-            loadTour();
-            document.getElementById('tour-fahrer-datum').value = '';
+            try {
+                const response = await fetch(`${API_URL}/fahrer-faehrt-tour/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        datum: datum,
+                        fahrer_id: fahrerId,
+                        tour_id: tourId
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.text();
+                    throw new Error(`Server error: ${response.status} - ${error}`);
+                }
+
+                alert('Fahrer zu Tour zugeordnet!');
+                await Promise.allSettled([
+                    loadFahrer().catch(e => console.error('Fahrer error:', e)),
+                    loadTour().catch(e => console.error('Tour error:', e)),
+                    loadFahrerFaehrtTouren().catch(e => console.error('Fahrer fährt Touren error:', e))
+                ]);
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('tour-fahrer-datum').value = today;
+            } catch (error) {
+                console.error('Error assigning fahrer to tour:', error);
+                alert('Fehler bei der Zuordnung: ' + error.message);
+            }
         }
 
         // Navigation
@@ -1632,12 +2003,44 @@
                         </div>
                     `;
                     break;
+                case 'fahrer-fahrzeug':
+                    html = `
+                        <div class="col-md-4">
+                            <label class="form-label">Datum</label>
+                            <input type="date" class="form-control" id="edit-${name}-datum" value="${data.datum}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Fahrer</label>
+                            <select class="form-select" id="edit-${name}-fahrer"></select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Fahrzeug</label>
+                            <select class="form-select" id="edit-${name}-fahrzeug"></select>
+                        </div>
+                    `;
+                    break;
+                case 'fahrer-tour':
+                    html = `
+                        <div class="col-md-4">
+                            <label class="form-label">Datum</label>
+                            <input type="date" class="form-control" id="edit-${name}-datum" value="${data.datum}">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Fahrer</label>
+                            <select class="form-select" id="edit-${name}-fahrer"></select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Tour</label>
+                            <select class="form-select" id="edit-${name}-tour"></select>
+                        </div>
+                    `;
+                    break;
             }
 
             document.getElementById('editFormContent').innerHTML = html;
 
             // Load dropdowns if needed for edit forms
-            if (name === 'sendung' || name === 'fahrzeug' || name === 'tour') {
+            if (name === 'sendung' || name === 'fahrzeug' || name === 'tour' || name === 'fahrer-fahrzeug' || name === 'fahrer-tour') {
                 loadEditDropdowns();
             }
 
@@ -1699,7 +2102,8 @@
                 await Promise.allSettled([
                     loadDashboard().catch(e => console.error('Dashboard error:', e)),
                     loadFahrer().catch(e => console.error('Fahrer error:', e)),
-                    loadDropdowns().catch(e => console.error('Dropdowns error:', e))
+                    loadDropdowns().catch(e => console.error('Dropdowns error:', e)),
+                    loadFahrerFaehrtFahrzeug().catch(e => console.error('Fahrer-Fahrzeug error:', e))
                 ]);
             } catch (error) {
                 console.error('Error deleting fahrer:', error);
@@ -1718,7 +2122,9 @@
                 alert('Fahrzeug gelöscht!');
                 await Promise.allSettled([
                     loadDashboard().catch(e => console.error('Dashboard error:', e)),
-                    loadFahrzeuge().catch(e => console.error('Fahrzeuge error:', e))
+                    loadFahrzeuge().catch(e => console.error('Fahrzeuge error:', e)),
+                    loadDropdowns().catch(e => console.error('Dropdowns error:', e)),
+                    loadFahrerFaehrtFahrzeug().catch(e => console.error('Fahrer-Fahrzeug error:', e))
                 ]);
             } catch (error) {
                 console.error('Error deleting fahrzeug:', error);
@@ -1791,6 +2197,12 @@
                 case 'verteilungszentrum':
                     url = `${API_URL}/verteilungszentrum/${currentEditData.verteilungszentrum_id}`;
                     break;
+                case 'fahrer-fahrzeug':
+                    url = `${API_URL}/fahrer-faehrt-fahrzeug/${encodeURIComponent(currentEditData.datum)}/${currentEditData.fahrer_id}/${currentEditData.fahrzeug_id}`;
+                    break;
+                case 'fahrer-tour':
+                    url = `${API_URL}/fahrer-faehrt-tour/${encodeURIComponent(currentEditData.datum)}/${currentEditData.fahrer_id}/${currentEditData.tour_id}`;
+                    break;
             }
 
             let editDataPayload;
@@ -1845,6 +2257,20 @@
                         telefonnummer: document.getElementById('edit-verteilungszentrum-telefon').value
                     };
                     break;
+                case 'fahrer-fahrzeug':
+                    editDataPayload = {
+                        datum: document.getElementById('edit-fahrer-fahrzeug-datum').value,
+                        fahrer_id: parseInt(document.getElementById('edit-fahrer-fahrzeug-fahrer').value),
+                        fahrzeug_id: parseInt(document.getElementById('edit-fahrer-fahrzeug-fahrzeug').value)
+                    };
+                    break;
+                case 'fahrer-tour':
+                    editDataPayload = {
+                        datum: document.getElementById('edit-fahrer-tour-datum').value,
+                        fahrer_id: parseInt(document.getElementById('edit-fahrer-tour-fahrer').value),
+                        tour_id: parseInt(document.getElementById('edit-fahrer-tour-tour').value)
+                    };
+                    break;
             }
 
             try {
@@ -1874,7 +2300,9 @@
                     loadFahrzeuge().catch(e => console.error('Fahrzeuge load error:', e)),
                     loadTour().catch(e => console.error('Tour load error:', e)),
                     loadVZ().catch(e => console.error('VZ load error:', e)),
-                    loadDropdowns().catch(e => console.error('Dropdowns load error:', e))
+                    loadDropdowns().catch(e => console.error('Dropdowns load error:', e)),
+                    loadFahrerFaehrtFahrzeug().catch(e => console.error('Fahrer-Fahrzeug load error:', e)),
+                    loadFahrerFaehrtTouren().catch(e => console.error('Fahrer-Touren load error:', e))
                 ]);
             } catch (error) {
                 console.error('Error saving:', error);
@@ -1950,7 +2378,7 @@
                 if (tourSelect) {
                     const tourResponse = await fetch(`${API_URL}/tour/`);
                     const tours = await tourResponse.json();
-                    tourSelect.innerHTML = '<option value="0">-- Keine Tour --</option>' + tours.map(t => `<option value="${t.tour_id}">${formatTime(t.tour_zeit)}</option>`).join('');
+                    tourSelect.innerHTML = '<option value="0">-- Keine Tour --</option>' + tours.map(t => `<option value="${t.tour_id}">${t.tour_zeit}</option>`).join('');
                 }
 
                 // Kunden für Sendung
@@ -1968,6 +2396,48 @@
                     const vzen = await vzResponse.json();
                     vzSelect.innerHTML = vzen.map(v => `<option value="${v.verteilungszentrum_id}">${v.adresse}</option>`).join('');
                 }
+
+                // Fahrer/Fahrzeug für Fahrer-Fahrzeug-Zuordnung
+                const ffFahrerSelect = document.getElementById('edit-fahrer-fahrzeug-fahrer');
+                if (ffFahrerSelect) {
+                    const fahrerResponse = await fetch(`${API_URL}/fahrer/`);
+                    const fahrer = await fahrerResponse.json();
+                    ffFahrerSelect.innerHTML = fahrer.map(f => `<option value="${f.fahrer_id}">${f.name} (${f.fahrer_id})</option>`).join('');
+                    if (currentEditData && currentEditData.fahrer_id !== undefined) {
+                        ffFahrerSelect.value = String(currentEditData.fahrer_id);
+                    }
+                }
+
+                const ffFahrzeugSelect = document.getElementById('edit-fahrer-fahrzeug-fahrzeug');
+                if (ffFahrzeugSelect) {
+                    const fahrzeugResponse = await fetch(`${API_URL}/fahrzeug/`);
+                    const fahrzeuge = await fahrzeugResponse.json();
+                    ffFahrzeugSelect.innerHTML = fahrzeuge.map(fz => `<option value="${fz.fahrzeug_id}">${fz.kennzeichen} (${fz.fahrzeug_id})</option>`).join('');
+                    if (currentEditData && currentEditData.fahrzeug_id !== undefined) {
+                        ffFahrzeugSelect.value = String(currentEditData.fahrzeug_id);
+                    }
+                }
+
+                // Fahrer/Tour für Fahrer-Tour-Zuordnung
+                const ftFahrerSelect = document.getElementById('edit-fahrer-tour-fahrer');
+                if (ftFahrerSelect) {
+                    const fahrerResponse = await fetch(`${API_URL}/fahrer/`);
+                    const fahrer = await fahrerResponse.json();
+                    ftFahrerSelect.innerHTML = fahrer.map(f => `<option value="${f.fahrer_id}">${f.name} (${f.fahrer_id})</option>`).join('');
+                    if (currentEditData && currentEditData.fahrer_id !== undefined) {
+                        ftFahrerSelect.value = String(currentEditData.fahrer_id);
+                    }
+                }
+
+                const ftTourSelect = document.getElementById('edit-fahrer-tour-tour');
+                if (ftTourSelect) {
+                    const tourResponse = await fetch(`${API_URL}/tour/`);
+                    const tours = await tourResponse.json();
+                    ftTourSelect.innerHTML = tours.map(t => `<option value="${t.tour_id}">${t.tour_id} - ${t.tour_standart} (${t.tour_zeit})</option>`).join('');
+                    if (currentEditData && currentEditData.tour_id !== undefined) {
+                        ftTourSelect.value = String(currentEditData.tour_id);
+                    }
+                }
             } catch (error) {
                 console.error('Error loading edit dropdowns:', error);
             }
@@ -1982,8 +2452,12 @@
                 await loadKundenGrid().catch(e => console.error('Kunden error:', e));
                 await loadSendungen().catch(e => console.error('Sendungen error:', e));
                 await loadFahrer().catch(e => console.error('Fahrer error:', e));
+                await loadFahrerFaehrtFahrzeug().catch(e => console.error('Fahrer-Fahrzeug error:', e));
                 await loadFahrzeuge().catch(e => console.error('Fahrzeuge error:', e));
                 await loadTour().catch(e => console.error('Touren error:', e));
+                await loadSendungenMitFahrzeug().catch(e => console.error('Sendungen mit Fahrzeug error:', e));
+                await loadTourenMitPaketen().catch(e => console.error('Touren mit Paketen error:', e));
+                await loadFahrerFaehrtTouren().catch(e => console.error('Fahrer fährt Touren error:', e));
                 await loadVZ().catch(e => console.error('VZ error:', e));
                 console.log('Initialization complete');
             } catch (error) {

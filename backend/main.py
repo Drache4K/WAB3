@@ -76,6 +76,16 @@ class Sendungsverfolgung(BaseModel):
     sendung_id: int
     verteilungszentrum_id: int
 
+class FahrerFaehrtTour(BaseModel):
+    datum: datetime.date
+    fahrer_id: int
+    tour_id: int
+
+class FahrerFaehrtFahrzeug(BaseModel):
+    datum: datetime.date
+    fahrer_id: int
+    fahrzeug_id: int
+
 ## -------------------------------------
 
 @app.get("/")
@@ -84,6 +94,109 @@ def read_root():
 
 # Open a cursor to perform database operations
 cur = conn.cursor()
+
+def ensure_frontend_views():
+    """Create or refresh DB views used by the main frontend screens."""
+    cur.execute(
+        """
+        CREATE OR REPLACE VIEW versand_dienstleister.v_frontend_kunden AS
+        SELECT k.kunde_id,
+               k.name,
+               k.telefonnummer,
+               k.mailadresse,
+               k.adresse_rechung,
+               k.adresse_liefer,
+               COUNT(s.sendung_id) AS paket_anzahl
+        FROM versand_dienstleister.kunde k
+        LEFT JOIN versand_dienstleister.sendung s
+            ON s.kunde_id = k.kunde_id
+        GROUP BY k.kunde_id, k.name, k.telefonnummer, k.mailadresse, k.adresse_rechung, k.adresse_liefer;
+
+        CREATE OR REPLACE VIEW versand_dienstleister.v_frontend_fahrzeuge AS
+        SELECT f.fahrzeug_id, f.kennzeichen, v.adresse, f.defekt
+        FROM versand_dienstleister.fahrzeug f
+        INNER JOIN versand_dienstleister.verteilungszentrum v
+            ON f.verteilungszentrum_id = v.verteilungszentrum_id;
+
+        CREATE OR REPLACE VIEW versand_dienstleister.v_frontend_defekte_fahrzeuge AS
+        SELECT fahrzeug_id, kennzeichen, adresse
+        FROM versand_dienstleister.v_frontend_fahrzeuge
+        WHERE defekt = TRUE;
+
+        CREATE OR REPLACE VIEW versand_dienstleister.v_frontend_fahrer_faehrt_tour AS
+        SELECT ft.datum, ft.fahrer_id, f.name AS fahrer_name,
+               ft.tour_id, t.tour_standart, t.tour_zeit
+        FROM versand_dienstleister.fahrer_faehrt_tour ft
+        INNER JOIN versand_dienstleister.fahrer f
+            ON f.fahrer_id = ft.fahrer_id
+        INNER JOIN versand_dienstleister.tour t
+            ON t.tour_id = ft.tour_id;
+
+        CREATE OR REPLACE VIEW versand_dienstleister.v_frontend_fahrer_faehrt_fahrzeug AS
+        SELECT ff.datum, ff.fahrer_id, f.name AS fahrer_name,
+               ff.fahrzeug_id, v.kennzeichen, v.defekt
+        FROM versand_dienstleister.fahrer_faehrt_fahrzeug ff
+        INNER JOIN versand_dienstleister.fahrer f
+            ON f.fahrer_id = ff.fahrer_id
+        INNER JOIN versand_dienstleister.fahrzeug v
+            ON v.fahrzeug_id = ff.fahrzeug_id;
+
+        CREATE OR REPLACE VIEW versand_dienstleister.v_frontend_touren_mit_paketen AS
+        SELECT t.tour_id,
+               t.tour_standart,
+               t.tour_zeit,
+               COUNT(s.sendung_id) AS paket_anzahl,
+               COALESCE(STRING_AGG(s.sendung_id::text, ', ' ORDER BY s.sendung_id), 'Keine Pakete') AS paket_ids
+        FROM versand_dienstleister.tour t
+        LEFT JOIN versand_dienstleister.sendung s
+            ON s.tour_id = t.tour_id
+        GROUP BY t.tour_id, t.tour_standart, t.tour_zeit;
+
+        CREATE OR REPLACE VIEW versand_dienstleister.v_frontend_touren_mit_fahrzeug_und_paketen AS
+        WITH paket_agg AS (
+            SELECT s.tour_id,
+                   COUNT(s.sendung_id) AS paket_anzahl,
+                   COALESCE(STRING_AGG(s.sendung_id::text, ', ' ORDER BY s.sendung_id), 'Keine Pakete') AS paket_ids
+            FROM versand_dienstleister.sendung s
+            GROUP BY s.tour_id
+        ),
+        fahrzeug_agg AS (
+            SELECT ft.tour_id,
+                   COALESCE(STRING_AGG(DISTINCT f.fahrzeug_id::text, ', ' ORDER BY f.fahrzeug_id::text), 'Kein Fahrzeug') AS fahrzeug_ids,
+                   COALESCE(STRING_AGG(DISTINCT f.kennzeichen, ', ' ORDER BY f.kennzeichen), 'Kein Fahrzeug') AS kennzeichen
+            FROM versand_dienstleister.fahrer_faehrt_tour ft
+            INNER JOIN versand_dienstleister.fahrer_faehrt_fahrzeug ff
+                ON ff.fahrer_id = ft.fahrer_id
+               AND ff.datum = ft.datum
+            INNER JOIN versand_dienstleister.fahrzeug f
+                ON f.fahrzeug_id = ff.fahrzeug_id
+            GROUP BY ft.tour_id
+        )
+        SELECT t.tour_id,
+               t.tour_standart,
+               t.tour_zeit,
+               COALESCE(fahrzeug_agg.fahrzeug_ids, 'Kein Fahrzeug') AS fahrzeug_ids,
+               COALESCE(fahrzeug_agg.kennzeichen, 'Kein Fahrzeug') AS kennzeichen,
+               COALESCE(paket_agg.paket_anzahl, 0) AS paket_anzahl,
+               COALESCE(paket_agg.paket_ids, 'Keine Pakete') AS paket_ids
+        FROM versand_dienstleister.tour t
+        LEFT JOIN paket_agg
+            ON paket_agg.tour_id = t.tour_id
+        LEFT JOIN fahrzeug_agg
+            ON fahrzeug_agg.tour_id = t.tour_id;
+
+        CREATE OR REPLACE VIEW versand_dienstleister.v_frontend_sendung_count AS
+        SELECT COUNT(*) AS anzahl_sendungen
+        FROM versand_dienstleister.sendung;
+        """
+    )
+    conn.commit()
+
+try:
+    ensure_frontend_views()
+except Exception as e:
+    print(f"Views konnten nicht erstellt werden: {e}")
+
 # Utils
 def print_json(text):
     print(json.dumps(text, indent=2))
@@ -311,12 +424,13 @@ def hard_reset():
         (false,'2025-03-03',15,4);
     """
     cur.execute(sql)
+    ensure_frontend_views()
     print("Hardresetet")
 
 # Kunde ------------------------------------------
 @app.get("/kunde/")
 def get_alle_Kunden():
-    cur.execute("SELECT * FROM versand_dienstleister.kunde;")
+    cur.execute("SELECT * FROM versand_dienstleister.v_frontend_kunden;")
     return to_json_liste(cur.fetchall(), cur.description)
 
 @app.get("/kunde/{id}")
@@ -468,6 +582,87 @@ def get_Fahrer_Tour(id: int):
             WHERE ft.fahrer_id = %s;""", (id,))
     return to_json_liste(cur.fetchall(), cur.description)
 
+@app.get("/fahrer-faehrt-tour/")
+def get_fahrer_faehrt_tour_liste():
+    cur.execute(
+        """SELECT *
+             FROM versand_dienstleister.v_frontend_fahrer_faehrt_tour
+             ORDER BY datum DESC, fahrer_id ASC;"""
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.get("/fahrer-faehrt-fahrzeug/")
+def get_fahrer_faehrt_fahrzeug_liste():
+    cur.execute(
+        """SELECT *
+             FROM versand_dienstleister.v_frontend_fahrer_faehrt_fahrzeug
+             ORDER BY datum DESC, fahrer_id ASC;"""
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.put("/fahrer-faehrt-fahrzeug/{datum}/{fahrer_id}/{fahrzeug_id}")
+def update_fahrer_faehrt_fahrzeug(datum: str, fahrer_id: int, fahrzeug_id: int, zuordnung: FahrerFaehrtFahrzeug):
+    cur.execute(
+        """UPDATE versand_dienstleister.fahrer_faehrt_fahrzeug
+           SET datum = %s, fahrer_id = %s, fahrzeug_id = %s
+           WHERE datum = %s AND fahrer_id = %s AND fahrzeug_id = %s;""",
+        (zuordnung.datum, zuordnung.fahrer_id, zuordnung.fahrzeug_id, datum, fahrer_id, fahrzeug_id)
+    )
+    conn.commit()
+    return {"status": "success", "message": "Zuordnung aktualisiert"}
+
+@app.delete("/fahrer-faehrt-fahrzeug/{datum}/{fahrer_id}/{fahrzeug_id}")
+def delete_fahrer_faehrt_fahrzeug(datum: str, fahrer_id: int, fahrzeug_id: int):
+    cur.execute(
+        """DELETE FROM versand_dienstleister.fahrer_faehrt_fahrzeug
+           WHERE datum = %s AND fahrer_id = %s AND fahrzeug_id = %s;""",
+        (datum, fahrer_id, fahrzeug_id)
+    )
+    conn.commit()
+    return {"status": "success", "message": "Zuordnung gelöscht"}
+
+@app.get("/fahrer-faehrt-tour/{datum}/{fahrer_id}/{tour_id}")
+def get_fahrer_faehrt_tour(datum: str, fahrer_id: int, tour_id: int):
+    cur.execute(
+        """SELECT *
+           FROM versand_dienstleister.v_frontend_fahrer_faehrt_tour
+           WHERE datum = %s AND fahrer_id = %s AND tour_id = %s;""",
+        (datum, fahrer_id, tour_id)
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.post("/fahrer-faehrt-tour/")
+def create_fahrer_faehrt_tour(zuordnung: FahrerFaehrtTour):
+        cur.execute(
+                """INSERT INTO versand_dienstleister.fahrer_faehrt_tour
+                     (datum, fahrer_id, tour_id)
+                     VALUES (%s, %s, %s);""",
+                (zuordnung.datum, zuordnung.fahrer_id, zuordnung.tour_id)
+        )
+        conn.commit()
+        return {"status": "success", "message": "Zuordnung erstellt"}
+
+@app.put("/fahrer-faehrt-tour/{datum}/{fahrer_id}/{tour_id}")
+def update_fahrer_faehrt_tour(datum: str, fahrer_id: int, tour_id: int, zuordnung: FahrerFaehrtTour):
+    cur.execute(
+        """UPDATE versand_dienstleister.fahrer_faehrt_tour
+           SET datum = %s, fahrer_id = %s, tour_id = %s
+           WHERE datum = %s AND fahrer_id = %s AND tour_id = %s;""",
+        (zuordnung.datum, zuordnung.fahrer_id, zuordnung.tour_id, datum, fahrer_id, tour_id)
+    )
+    conn.commit()
+    return {"status": "success", "message": "Zuordnung aktualisiert"}
+
+@app.delete("/fahrer-faehrt-tour/{datum}/{fahrer_id}/{tour_id}")
+def delete_fahrer_faehrt_tour(datum: str, fahrer_id: int, tour_id: int):
+    cur.execute(
+        """DELETE FROM versand_dienstleister.fahrer_faehrt_tour
+           WHERE datum = %s AND fahrer_id = %s AND tour_id = %s;""",
+        (datum, fahrer_id, tour_id)
+    )
+    conn.commit()
+    return {"status": "success", "message": "Zuordnung gelöscht"}
+
 @app.post("/fahrer/")
 def create_fahrer(fahrer: Fahrer):
     cur.execute(
@@ -504,11 +699,8 @@ def delete_fahrer(id: int):
 @app.get("/fahrzeug/")
 def get_alle_Fahrzeuge():
     cur.execute(
-        """SELECT f.fahrzeug_id, f.kennzeichen, v.adresse, f.defekt
-        FROM versand_dienstleister.fahrzeug f
-        INNER JOIN versand_dienstleister.verteilungszentrum v
-        ON f.verteilungszentrum_id = v.verteilungszentrum_id;
-    """
+        """SELECT *
+           FROM versand_dienstleister.v_frontend_fahrzeuge;"""
     )
     return to_json_liste(cur.fetchall(), cur.description)
 
@@ -520,12 +712,8 @@ def get_Fahrzeug_id(id):
 @app.get("/fahrzeug/defekt/")
 def get_defekte_Fahrzeuge():
     cur.execute(
-        """SELECT f.fahrzeug_id, f.kennzeichen, v.adresse
-        FROM versand_dienstleister.fahrzeug f
-        INNER JOIN versand_dienstleister.verteilungszentrum v
-        ON f.verteilungszentrum_id = v.verteilungszentrum_id
-        WHERE f.defekt = TRUE;
-    """
+        """SELECT *
+           FROM versand_dienstleister.v_frontend_defekte_fahrzeuge;"""
     )
     return to_json_liste(cur.fetchall(), cur.description)
 
@@ -584,6 +772,15 @@ def get_Tour_Fahrer(id: int):
             INNER JOIN versand_dienstleister.fahrer f
             ON f.fahrer_id = ft.fahrer_id
             WHERE ft.tour_id = %s;""", (id,))
+    return to_json_liste(cur.fetchall(), cur.description)
+
+@app.get("/tour/mit-paketen/")
+def get_touren_mit_paketen():
+    cur.execute(
+                """SELECT *
+                     FROM versand_dienstleister.v_frontend_touren_mit_paketen
+                     ORDER BY tour_id;"""
+    )
     return to_json_liste(cur.fetchall(), cur.description)
 
 @app.post("/tour/")
@@ -666,7 +863,7 @@ def delete_verteilungszentrum(id: int):
 # Aggregation Queries
 @app.get("/sendung/count/")
 def get_sendung_count():
-    cur.execute("SELECT COUNT(*) AS anzahl_sendungen FROM versand_dienstleister.sendung;")
+    cur.execute("SELECT anzahl_sendungen FROM versand_dienstleister.v_frontend_sendung_count;")
     return to_json_liste(cur.fetchall(), cur.description)
 
 @app.get("/sendung/average-weight/")
@@ -740,6 +937,15 @@ def get_sendungen_with_verteilungszentrum():
     """)
     return to_json_liste(cur.fetchall(), cur.description)
 
+@app.get("/sendung/mit-fahrzeug/")
+def get_sendungen_mit_fahrzeug():
+    cur.execute(
+        """SELECT *
+           FROM versand_dienstleister.v_frontend_touren_mit_fahrzeug_und_paketen
+           ORDER BY tour_zeit, tour_id;"""
+    )
+    return to_json_liste(cur.fetchall(), cur.description)
+
 # Extras ------------
 
 # Health check endpoint
@@ -807,5 +1013,5 @@ def tests():
 #    tests()
 
 if __name__ == "__main__":
-    print_json(create_fahrer(Fahrer(fahrer_id=11, fuehrerschein="B9", name="Tomas")))
+    ensure_frontend_views()
     uvicorn.run("app:app", port=7000, reload=True)
