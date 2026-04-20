@@ -546,7 +546,7 @@ def get_alle_Sendungen():
     return to_json_liste(cur.fetchall(), cur.description)
 
 @app.get("/sendung/{id}")
-def get_Sendung_id(id):
+def get_Sendung_id(id: int):
     cur.execute(
         "SELECT * FROM versand_dienstleister.sendung WHERE sendung_id = %s;", (id,)
     )
@@ -592,7 +592,7 @@ def get_unverplante_Sendungen():
     return to_json_liste(cur.fetchall(), cur.description)
 
 @app.get("/sendung/{id}/verteilungszentrum/")
-def get_Sendung_Verteilungszenter(id):
+def get_Sendung_Verteilungszenter(id: int):
     cur.execute(
         """SELECT v.*
         FROM versand_dienstleister.sendung s
@@ -653,7 +653,7 @@ def get_alle_Fahrer():
     return to_json_liste(cur.fetchall(), cur.description)
 
 @app.get("/fahrer/{id}")
-def get_Fahrer_id(id):
+def get_Fahrer_id(id: int):
     cur.execute("SELECT * FROM versand_dienstleister.fahrer WHERE fahrer_id = %s;", (id,))
     return to_json_liste(cur.fetchall(), cur.description)
 
@@ -792,7 +792,7 @@ def get_alle_Fahrzeuge():
     return to_json_liste(cur.fetchall(), cur.description)
 
 @app.get("/fahrzeug/{id}")
-def get_Fahrzeug_id(id):
+def get_Fahrzeug_id(id: int):
     cur.execute("SELECT * FROM versand_dienstleister.fahrzeug WHERE fahrzeug_id = %s;", (id,))
     return to_json_liste(cur.fetchall(), cur.description)
 
@@ -845,7 +845,7 @@ def get_alle_Touren():
     return to_json_liste(cur.fetchall(), cur.description)
 
 @app.get("/tour/{id}")
-def get_Tour_id(id):
+def get_Tour_id(id: int):
     cur.execute("SELECT * FROM versand_dienstleister.tour WHERE tour_id = %s;", (id,))
     return to_json_liste(cur.fetchall(), cur.description)
 

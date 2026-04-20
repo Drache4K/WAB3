@@ -2000,8 +2000,8 @@
                         <div class="col-md-3">
                             <label class="form-label">Defekt</label>
                             <select class="form-select" id="edit-${name}-defekt">
-                                <option value="false" ${data.defekt ? 'selected' : ''}>Nein</option>
-                                <option value="true" ${!data.defekt ? 'selected' : ''}>Ja</option>
+                                <option value="false" ${!data.defekt ? 'selected' : ''}>Nein</option>
+                                <option value="true" ${data.defekt ? 'selected' : ''}>Ja</option>
                             </select>
                         </div>
                         <div class="col-md-4">
@@ -2342,6 +2342,8 @@
                     loadFahrer().catch(e => console.error('Fahrer load error:', e)),
                     loadFahrzeuge().catch(e => console.error('Fahrzeuge load error:', e)),
                     loadTour().catch(e => console.error('Tour load error:', e)),
+                    loadSendungenMitFahrzeug().catch(e => console.error('Sendungen mit Fahrzeug load error:', e)),
+                    loadTourenMitPaketen().catch(e => console.error('Touren mit Paketen load error:', e)),
                     loadVZ().catch(e => console.error('VZ load error:', e)),
                     loadDropdowns().catch(e => console.error('Dropdowns load error:', e)),
                     loadFahrerFaehrtFahrzeug().catch(e => console.error('Fahrer-Fahrzeug load error:', e)),
